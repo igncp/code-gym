@@ -1,0 +1,1 @@
+Using `Go by example` (https://gobyexample.com, Copyright Mark McGranaghan, http://creativecommons.org/licenses/by/3.0/) with small changes on most of them
