@@ -1,1 +1,1 @@
-Project with Go examples and scripts to start learning it from zero previous experience
+Project with examples in different languages
