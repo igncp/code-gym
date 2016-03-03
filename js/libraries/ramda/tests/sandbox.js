@@ -72,7 +72,7 @@ describe("sandbox", () => {
   it("4", () => {
     const {
       always, ifElse, compose, equals, modulo, __, unapply,
-      apply, over, lensIndex,
+      apply, over, lensIndex, uncurryN, identity, curryN, converge,
     } = R
 
 
@@ -83,18 +83,77 @@ describe("sandbox", () => {
     // isInt :: [a, b] → [a, b]
     const callAlwaysOnSecondArg = over(lensIndex(1), always)
     // recursivelyCallIfInt :: ((Number => Number), Number) → Number → Number
-    const recursivelyCallIfInt = R.curryN(2, unapply(compose(
+    const recursivelyCallIfInt = curryN(2, unapply(compose(
       applyIfElseIsInt,
       callAlwaysOnSecondArg
     )))
 
-    const fn = num => R.converge(
-      R.uncurryN(2, recursivelyCallIfInt(fn)),
-      [R.identity, Math.sqrt]
+    const fn = num => converge(
+      uncurryN(2, recursivelyCallIfInt(fn)),
+      [identity, Math.sqrt]
     )(num)
 
     // minimum int with recursive sqrt
     checkEql({ init: 81, fn, expected: 3 })
     checkEql({ init: 16, fn, expected: 2 })
+  })
+
+  it("5", () => {
+    const {
+      converge, useWith, split, join, append, flip, compose, call, prepend, prop,
+      times, always, maxBy, identity, reduce, reverse,
+    } = R
+    const init = "Foo foobar bar"
+    const expected = `
+******
+Foo
+foobar
+bar
+******
+`
+    const splitter = split(" ")
+    const joiner = join("\n")
+    const appendF = flip(append)
+    const prependF = flip(prepend)
+    const appendOrRevertToStrFn = compose(
+      useWith(compose(join(""), call)),
+      compose(
+        reverse,
+        appendF([split("")])
+      )
+    )
+
+    const appendStr = appendOrRevertToStrFn(append)
+    const prependStr = appendOrRevertToStrFn(prepend)
+    const maxLengthOfStrings = compose(
+      prop("length"),
+      reduce(maxBy(prop("length")), "")
+    )
+    const createAsterisksStr = compose(
+      join(""),
+      times(always("*"))
+    )
+    const appendAsterisks = useWith(
+      call,
+      [appendF, createAsterisksStr]
+    )
+    const prependAsterisks = useWith(
+      call,
+      [prependF, createAsterisksStr]
+    )
+
+    const updateAppendingAsterisks = converge(appendAsterisks, [identity, maxLengthOfStrings])
+    const updatePrependingAsterisks = converge(prependAsterisks, [identity, maxLengthOfStrings])
+
+    const fn = compose(
+      appendStr("\n"),
+      prependStr("\n"),
+      joiner,
+      updateAppendingAsterisks,
+      updatePrependingAsterisks,
+      splitter
+    )
+
+    checkEql({ init, fn, expected })
   })
 })
