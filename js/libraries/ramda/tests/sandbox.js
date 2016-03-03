@@ -115,7 +115,7 @@ bar
     const joiner = join("\n")
     const appendF = flip(append)
     const prependF = flip(prepend)
-    const appendOrRevertToStrFn = compose(
+    const appendOrPrependToStrFn = compose(
       useWith(compose(join(""), call)),
       compose(
         reverse,
@@ -123,8 +123,8 @@ bar
       )
     )
 
-    const appendStr = appendOrRevertToStrFn(append)
-    const prependStr = appendOrRevertToStrFn(prepend)
+    const appendStr = appendOrPrependToStrFn(append)
+    const prependStr = appendOrPrependToStrFn(prepend)
     const maxLengthOfStrings = compose(
       prop("length"),
       reduce(maxBy(prop("length")), "")
