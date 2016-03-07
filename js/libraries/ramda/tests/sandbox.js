@@ -166,9 +166,6 @@ bar
       unapply, apply, map,
     } = R
 
-    const init = Maybe.Just("foo")
-    const expected = Maybe.Just("f_o_o_")
-
     const justify = curryN(2, compose(Maybe.Just, call))
     const composeJust = unapply(compose(apply(composeK), map(justify)))
 
@@ -178,6 +175,7 @@ bar
       split("")
     )
 
-    checkEql({ init, fn, expected })
+    checkEql({ init: Maybe.Just("foo"), fn, expected: Maybe.Just("f_o_o_") })
+    checkEql({ init: Maybe.Nothing(), fn, expected: Maybe.Nothing() })
   })
 })
