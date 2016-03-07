@@ -1,0 +1,1 @@
+Haskell basics. Using modified examples from the great book http://learnyouahaskell.com

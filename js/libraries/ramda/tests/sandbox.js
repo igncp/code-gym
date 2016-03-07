@@ -1,5 +1,7 @@
 import { expect } from "chai"
+
 import R from "ramda"
+import RF from "ramda-fantasy"
 
 const checkEqlSpread = ({ fn, expected, initSpread }) => {
   const actual = fn(...initSpread)
@@ -152,6 +154,28 @@ bar
       updateAppendingAsterisks,
       updatePrependingAsterisks,
       splitter
+    )
+
+    checkEql({ init, fn, expected })
+  })
+
+  it("6", () => {
+    const { Maybe } = RF
+    const {
+      split, curryN, compose, call, join, append, composeK,
+      unapply, apply, map,
+    } = R
+
+    const init = Maybe.Just("foo")
+    const expected = Maybe.Just("f_o_o_")
+
+    const justify = curryN(2, compose(Maybe.Just, call))
+    const composeJust = unapply(compose(apply(composeK), map(justify)))
+
+    const fn = composeJust(
+      join("_"),
+      append(""),
+      split("")
     )
 
     checkEql({ init, fn, expected })
