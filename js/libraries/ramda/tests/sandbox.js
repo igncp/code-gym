@@ -167,9 +167,9 @@ bar
     } = R
 
     const justify = curryN(2, compose(Maybe.Just, call))
-    const composeJust = unapply(compose(apply(composeK), map(justify)))
+    const composeMaybe = unapply(compose(apply(composeK), map(justify)))
 
-    const fn = composeJust(
+    const fn = composeMaybe(
       join("_"),
       append(""),
       split("")
