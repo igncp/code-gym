@@ -1,0 +1,1 @@
+Using features learnt from the book "Haskell design patterns" from Ryan Lemmer
