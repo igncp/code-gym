@@ -1,0 +1,16 @@
+{
+  "name": "neo4j-code-gym",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.3.4",
+    "neo4j": "^2.0.0-RC2",
+    "promisify-node": "^0.4.0"
+  }
+}
