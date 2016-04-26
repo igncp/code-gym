@@ -2,3 +2,10 @@ vendor
 node_modules
 *.log
 *.pyc
+
+/java/**/.metadata
+/java/**/.project
+/java/**/.classpath
+/java/**/.settings
+/java/**/.recommenders
+/java/**/bin/
