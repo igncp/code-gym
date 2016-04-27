@@ -9,3 +9,7 @@ node_modules
 /java/**/.settings
 /java/**/.recommenders
 /java/**/bin/
+/java/**/build/
+/java/**/.gradle/
+/java/**/target/
+/java/**/gradlew

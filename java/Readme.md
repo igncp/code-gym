@@ -1,0 +1,1 @@
+The examples about the Spring guides are inspired by: https://spring.io/guides with modifications in all of them
