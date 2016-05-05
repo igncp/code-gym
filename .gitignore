@@ -13,3 +13,15 @@ node_modules
 /java/**/.gradle/
 /java/**/target/
 /java/**/gradlew
+
+/scala/**/.metadata
+/scala/**/.project
+/scala/**/.classpath
+/scala/**/.settings
+/scala/**/.recommenders
+/scala/**/bin/
+/scala/**/build/
+/scala/**/.gradle/
+/scala/**/target/
+/scala/**/gradlew
+/scala/**/.cache-main
