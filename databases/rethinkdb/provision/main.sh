@@ -19,7 +19,6 @@ linkModulesInPath() {
   done
 }
 
-
 cpFileFromProvision .bashrc ~
 cpFileFromProvision .tmux.conf ~
 cpFileFromProvision .vimrc ~
@@ -29,6 +28,10 @@ if ! type tree > /dev/null  ; then
   sudo apt-get update
   sudo apt-get install -y vim-nox # for vim neocomplete
   sudo apt-get install -y curl git unzip ack-grep git-extras jq tree
+
+  sudo apt-get install -y python-pip # for `rethinkdb dump`
+  sudo pip install rethinkdb
+
   git config --global user.email "you@example.com" && git config --global user.name "Your Name"
 fi
 
@@ -68,6 +71,7 @@ if ! type rethinkdb > /dev/null  ; then
 fi
 
 sudo cp /project/provision/default.conf /etc/rethinkdb/instances.d/
+
 linkModulesInPath /project/examples/basic
 
 mkdir -p ~/.vim/autoload/ ~/.vim/bundle
