@@ -8,14 +8,21 @@
 import Data.Aeson (decode, FromJSON, ToJSON)
 import Data.ByteString.Lazy (ByteString)
 import Data.List (sortBy)
+import Data.Maybe
 import Data.Ord (comparing)
 import GHC.Generics (Generic)
 import Network.HTTP.Conduit (simpleHttp)
+
+-- Import Prelude to avoid "ambiguous occurrence id"
+import Prelude (
+  String, Show, Int, mapM_, putStrLn, show,
+  IO, return, (++), (.), ($))
 
 postsURL :: String
 postsURL = "http://jsonplaceholder.typicode.com/posts"
 
 data Post = Post {
+  id :: Int,
   userId :: Int,
   title :: String
 } deriving (Show, Generic)
@@ -24,7 +31,8 @@ instance FromJSON Post
 instance ToJSON Post
 
 displayPost :: Post -> String
-displayPost p = "Title: '" ++ (title p) ++ "'\n"
+displayPost p = "Id: " ++ show (id p) ++ "\n"
+  ++ "Title: '" ++ (title p) ++ "'\n"
   ++ "User Id: " ++ show (userId p)
 
 printPosts :: [Post] -> IO ()
