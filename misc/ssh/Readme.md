@@ -1,0 +1,1 @@
+Environment to try ssh tips described in [this article](http://www.cyberciti.biz/tips/linux-unix-bsd-openssh-server-best-practices.html)
