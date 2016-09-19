@@ -47,7 +47,7 @@ fetchPosts = do
   return (decode postsStr)
 
 sortPostsByTitle :: [Post] -> [Post]
-sortPostsByTitle initialPosts = sortBy (comparing title) initialPosts
+sortPostsByTitle = sortBy (comparing title)
 
 handlePostsResponse :: Maybe [Post] -> IO ()
 handlePostsResponse posts = case posts of
