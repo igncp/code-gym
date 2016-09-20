@@ -12,14 +12,18 @@ syntax on
 " support all hex colors (e.g. for syntastic)
   set  t_Co=256
 
+set autoindent
 set clipboard=unnamedplus
+set cursorline
+set expandtab
 set number
-set tabstop=2
 set shiftwidth=2
 set softtabstop=2
-set expandtab
-set cursorline
-set autoindent
+set tabstop=2
+
+" airline
+  set laststatus=2
+  let g:airline_theme='solarized'
 
 " remove autoindentation when pasting
   set pastetoggle=<F2>
@@ -56,6 +60,9 @@ let g:NERDSpaceDelims = 1
   hi SpellBad ctermbg=lightred ctermfg=black
 
 map ,e :e <C-R>=expand("%:p:h") . "/" <CR>
+
+" sort lines
+  vmap <F5> :sort<CR>
 
 " change to current file directory
   nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
