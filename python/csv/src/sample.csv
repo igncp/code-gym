@@ -1,0 +1,8 @@
+"Artist","Title","Year"
+"a","b",2000
+"foo artist","foo title"
+"baz artist","baz title"
+"artist baz","title With capital Letters"
+"artist with final period","title with final period."
+"artist not title","-"
+"   artist with trailing spaces   ","    title with trailing spaces    "
