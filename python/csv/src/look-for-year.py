@@ -46,7 +46,6 @@ lines_length = len(lines)
 for idx, album in enumerate(lines):
     artist = album[0]
     title = album[1]
-    print(len(album))
     if len(album) > 2:
         continue
     results = d.search(artist + " " + title, type='master', per_page="100")
