@@ -47,7 +47,10 @@ install_vim_package() {
 }
 
 mkdir -p ~/.vim/autoload/ ~/.vim/bundle
-if [ ! -f ~/.vim/autoload/pathogen.vim ]; then curl https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim > ~/.vim/autoload/pathogen.vim; fi
+if [ ! -f ~/.vim/autoload/pathogen.vim ]; then
+  curl https://raw.githubusercontent.com/tpope/vim-pathogen/master/autoload/pathogen.vim \
+    > ~/.vim/autoload/pathogen.vim
+fi
 
 install_vim_package plasticboy/vim-markdown
 install_vim_package vim-airline/vim-airline

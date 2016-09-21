@@ -23,11 +23,12 @@ with open(source_file_path, 'rb') as csvfile:
     for line in content:
         lines.append(line)
 
+# generate a user token at https://www.discogs.com/settings/developers
+
 discogs_token = None
 with open("discogs-token.txt", "rb") as file:
     discogs_token = file.read().rstrip()
 
-# generate a user token at https://www.discogs.com/settings/developers
 d = discogs_client.Client('LookForAlbumYearApplication/0.1',
     user_token=discogs_token)
 
@@ -45,16 +46,17 @@ lines_length = len(lines)
 for idx, album in enumerate(lines):
     artist = album[0]
     title = album[1]
+    print(len(album))
     if len(album) > 2:
         continue
     results = d.search(artist + " " + title, type='master', per_page="100")
     if len(results) > 0:
         main_release = results[0].main_release
         year = int(main_release.year)
-        time.sleep(2)
     else:
         year = "-"
     lines[idx] = [artist, title, year]
+    time.sleep(2)
     print("Completed " + str(idx + 1) + " of " + str(lines_length))
     print("Writing file ...")
     write_file()
