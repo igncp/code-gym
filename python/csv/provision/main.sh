@@ -25,7 +25,7 @@ if ! type pip > /dev/null  ; then
   sudo apt-get install -y python-pip
 fi
 
-GLOBAL_PIP_MODULES=(flake8 discogs_client)
+GLOBAL_PIP_MODULES=(flake8 discogs_client wikipedia)
 
 for MODULE_NAME in "${GLOBAL_PIP_MODULES[@]}"; do
   if [ ! -d /usr/local/lib/python2.7/dist-packages/$MODULE_NAME ]; then

@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 """
-This script accepts a CSV file with a shape like
-the sample. It will write to StdOut. It will capitalize
-all the words of the artist and the first word of the
-title, with some extra cleaverness
+This script will capitalize all the words
+of the artist and the first word of the
+title, with some extra cleaverness. Arguments:
+  - Path to the CSV file
 """
 
 import sys
