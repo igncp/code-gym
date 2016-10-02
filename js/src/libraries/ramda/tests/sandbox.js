@@ -1,32 +1,40 @@
-import { expect } from "chai"
+import {expect} from "chai"
 
 import R from "ramda"
 import RF from "ramda-fantasy"
 
-const checkEqlSpread = ({ fn, expected, initSpread }) => {
+const checkEqlSpread = ({fn, expected, initSpread}) => {
+
   const actual = fn(...initSpread)
 
   expect(actual).to.eql(expected)
+
 }
 
-const checkEql = ({ init, fn, expected }) => {
-  checkEqlSpread({ initSpread: [init], fn, expected })
+const checkEql = ({init, fn, expected}) => {
+
+  checkEqlSpread({initSpread: [init], fn, expected})
+
 }
 
 describe("sandbox", () => {
+
   it("1", () => {
+
     const initSpread = [3, 4, 9, -3]
 
-    const { juxt, unapply } = R
+    const {juxt, unapply} = R
 
     const fn = unapply(juxt)(Math.min, Math.max)
     const expected = [-3, 9]
 
-    checkEqlSpread({ fn, expected, initSpread })
+    checkEqlSpread({fn, expected, initSpread})
+
   })
 
   it("2", () => {
-    const { is, always, of, over, inc, lensIndex, ifElse } = R
+
+    const {is, always, of, over, inc, lensIndex, ifElse} = R
 
     const ifElseIsArray = ifElse(is(Array))
 
@@ -35,16 +43,20 @@ describe("sandbox", () => {
       always(of(1))
     )
 
-    const actual1 = incrementHead({ foo: "bar" })
+    const actual1 = incrementHead({foo: "bar"})
     const expected1 = [1]
+
     expect(actual1).to.eql(expected1)
 
     const actual2 = incrementHead([1, 2])
     const expected2 = [2, 2]
+
     expect(actual2).to.eql(expected2)
+
   })
 
   it("3", () => {
+
     const init = "foobar"
     const expected = "FoObAr"
 
@@ -68,15 +80,16 @@ describe("sandbox", () => {
     // fn :: String → String
     const fn = compose(join, upperOdd, split)
 
-    checkEql({ init, fn, expected })
+    checkEql({init, fn, expected})
+
   })
 
   it("4", () => {
+
     const {
       always, ifElse, compose, equals, modulo, __, unapply,
       apply, over, lensIndex, uncurryN, identity, curryN, converge,
     } = R
-
 
     // isInt :: Number → Boolean
     const isInt = compose(equals(0), modulo(__, 1))
@@ -90,17 +103,19 @@ describe("sandbox", () => {
       callAlwaysOnSecondArg
     )))
 
-    const fn = num => converge(
+    const fn = (num) => converge(
       uncurryN(2, recursivelyCallIfInt(fn)),
       [identity, Math.sqrt]
     )(num)
 
     // minimum int with recursive sqrt
-    checkEql({ init: 81, fn, expected: 3 })
-    checkEql({ init: 16, fn, expected: 2 })
+    checkEql({init: 81, fn, expected: 3})
+    checkEql({init: 16, fn, expected: 2})
+
   })
 
   it("5", () => {
+
     const {
       converge, useWith, split, join, append, flip, compose, call, prepend, prop,
       times, always, maxBy, identity, reduce, reverse,
@@ -156,11 +171,13 @@ bar
       splitter
     )
 
-    checkEql({ init, fn, expected })
+    checkEql({init, fn, expected})
+
   })
 
   it("6", () => {
-    const { Maybe } = RF
+
+    const {Maybe} = RF
     const {
       split, curryN, compose, call, join, append, composeK,
       unapply, apply, map,
@@ -175,7 +192,9 @@ bar
       split("")
     )
 
-    checkEql({ init: Maybe.Just("foo"), fn, expected: Maybe.Just("f_o_o_") })
-    checkEql({ init: Maybe.Nothing(), fn, expected: Maybe.Nothing() })
+    checkEql({init: Maybe.Just("foo"), fn, expected: Maybe.Just("f_o_o_")})
+    checkEql({init: Maybe.Nothing(), fn, expected: Maybe.Nothing()})
+
   })
+
 })

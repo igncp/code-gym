@@ -5,15 +5,31 @@ const {expect} = chai
 
 chai.use(require("sinon-chai"))
 
+const s = spy()
+
 describe("basic 01", function() {
 
-  it("Observable.of with arguments", () => {
+  beforeEach(() => {
+
+    s.reset()
+
+  })
+
+  it("Observable.of", () => {
 
     const obv = Rx.Observable.of("foo", "bar")
-    const s = spy()
 
     obv.subscribe(s)
     expect(s).to.have.been.calledTwice
+
+  })
+
+  it("Observable.from", () => {
+
+    const obv = Rx.Observable.from(["foo", "bar", "baz"])
+
+    obv.subscribe(s)
+    expect(s).to.have.been.calledThrice
 
   })
 

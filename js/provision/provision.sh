@@ -22,6 +22,8 @@ cat > ~/.bashrc <<"EOF"
 
 stty -ixon # prevent the terminal from hanging on ctrl+s
 
+export HISTCONTROL=ignoreboth:erasedups
+
 source_if_exists() {
   FILE_PATH=$1
   if [ -f $FILE_PATH ]; then source $FILE_PATH; fi
@@ -37,6 +39,7 @@ alias rm="rm -rf"
 alias mkdir="mkdir -p"
 alias cp="cp -r"
 alias tmux="tmux; exit"
+alias Exit="killall tmux"
 
 Update_src() {
   rm -rf /project/src
@@ -124,11 +127,16 @@ install_vim_package vim-airline/vim-airline
 install_vim_package vim-airline/vim-airline-themes
 install_vim_package vim-scripts/cream-showinvisibles
 install_vim_package evidens/vim-twig
+install_vim_package honza/vim-snippets
+install_vim_package Shougo/neosnippet.vim
+install_vim_package leafgarland/typescript-vim
+install_vim_package quramy/tsuquyomi
 
 cat > ~/.vimrc <<"EOF"
 execute pathogen#infect()
 filetype plugin indent on
 syntax on
+set background=dark
 
 " fix control + arrows
   set term=xterm
@@ -162,7 +170,6 @@ set tabstop=2
 
 " airline
   set laststatus=2
-  let g:airline_theme='solarized'
 
 " remove autoindentation when pasting
   set pastetoggle=<F2>
@@ -171,10 +178,12 @@ set tabstop=2
   let g:neocomplete#enable_at_startup = 1
 
 let g:vim_markdown_folding_disabled = 1
-let g:ctrlp_map = '<c-p>'
-let g:ctrlp_cmd = 'CtrlP'
 let g:NERDSpaceDelims = 1
 
+" ctrlp
+  let g:ctrlp_map = '<c-p>'
+  let g:ctrlp_cmd = 'CtrlP'
+  let g:ctrlp_custom_ignore = '\v[\/](node_modules|target|dist)|(\.(swp|ico|git|svn))$'
 
 " syntastic
   let g:syntastic_mode_map = { 'mode': 'active',
@@ -188,6 +197,7 @@ let g:NERDSpaceDelims = 1
   let g:syntastic_check_on_open = 1
   let g:syntastic_check_on_wq = 0
   let g:syntastic_javascript_checkers = ['eslint']
+  let g:syntastic_typescript_checkers = ['tsc', 'tslint']
   let g:syntastic_json_checkers=[]
   highlight link SyntasticErrorSign SignColumn
   highlight link SyntasticWarningSign SignColumn
@@ -200,7 +210,7 @@ let g:NERDSpaceDelims = 1
 
 map ,e :e <C-R>=expand("%:p:h") . "/" <CR>
 
-" move up/down from the beginning/end of lines 
+" move up/down from the beginning/end of lines
   set ww+=<,>
 
 " change to current file directory
@@ -227,4 +237,42 @@ inoremap <C-a> <Esc>I
   autocmd CompleteDone * pclose " close when done
   set splitbelow " move to the bottom
 
+" neosnippet
+  imap <C-k>     <Plug>(neosnippet_expand_or_jump)
+  smap <C-k>     <Plug>(neosnippet_expand_or_jump)
+  xmap <C-k>     <Plug>(neosnippet_expand_target)
+  imap <expr><TAB>
+   \ pumvisible() ? "\<C-n>" :
+   \ neosnippet#expandable_or_jumpable() ?
+   \    "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+  smap <expr><TAB> neosnippet#expandable_or_jumpable() ?
+   \ "\<Plug>(neosnippet_expand_or_jump)" : "\<TAB>"
+  if has('conceal')
+    set conceallevel=2 concealcursor=niv
+  endif
+  let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
 EOF
+
+# examples
+
+clone_example_from_gh() {
+  PARENT_PATH=~/examples/$1
+  REPO_URL=https://github.com/$2.git
+  DIR=$(echo $2 | sed -r "s|(.+)/(.+)|\1_-_\2|") # foo/bar => foo_-_bar
+  COMMIT=$3
+  FULL_PATH=$PARENT_PATH/$DIR
+  mkdir -p $PARENT_PATH
+  if [ ! -d $FULL_PATH ]; then
+    git clone $REPO_URL $FULL_PATH
+    cd $FULL_PATH
+    git reset --hard $COMMIT > /dev/null 2>&1
+    cd - > /dev/null 2>&1
+  fi
+}
+
+clone_example_from_gh typescript ReactiveX/rxjs e20cdb73e9
+clone_example_from_gh typescript searchkit/searchkit-demo 1dbfe2c96
+clone_example_from_gh typescript remojansen/TypeScriptTestingExamples 626500d5
+clone_example_from_gh typescript Vadorequest/sails-typescript fd541f3a
+
+echo "finished provisioning"
