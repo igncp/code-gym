@@ -8,7 +8,7 @@ if ! type jq > /dev/null 2>&1 ; then
   echo "installing basic packages"
   sudo apt-get update
   sudo apt-get install -y curl git unzip ack-grep git-extras \
-    build-essential python-software-properties tree jq
+    build-essential python-software-properties tree entr jq
 
   git config --global user.email "foo@bar.com" && git config --global user.name "Foo Bar"
 fi
@@ -178,6 +178,7 @@ set tabstop=2
   let g:neocomplete#enable_at_startup = 1
 
 let g:vim_markdown_folding_disabled = 1
+let g:vim_markdown_conceal=0
 let g:NERDSpaceDelims = 1
 
 " ctrlp
@@ -238,9 +239,9 @@ inoremap <C-a> <Esc>I
   set splitbelow " move to the bottom
 
 " neosnippet
-  imap <C-k>     <Plug>(neosnippet_expand_or_jump)
-  smap <C-k>     <Plug>(neosnippet_expand_or_jump)
-  xmap <C-k>     <Plug>(neosnippet_expand_target)
+  imap <C-l>     <Plug>(neosnippet_expand_or_jump)
+  smap <C-l>     <Plug>(neosnippet_expand_or_jump)
+  xmap <C-l>     <Plug>(neosnippet_expand_target)
   imap <expr><TAB>
    \ pumvisible() ? "\<C-n>" :
    \ neosnippet#expandable_or_jumpable() ?
@@ -251,6 +252,7 @@ inoremap <C-a> <Esc>I
     set conceallevel=2 concealcursor=niv
   endif
   let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
+  let g:neosnippet#disable_runtime_snippets={'c' : 1, 'cpp' : 1,}
 EOF
 
 # examples
