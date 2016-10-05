@@ -1,5 +1,7 @@
 vendor
 node_modules
+typings/
+
 *.log
 *.pyc
 .vagrant
