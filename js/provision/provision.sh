@@ -45,6 +45,8 @@ Update_src() {
   rm -rf /project/src
   rsync -av \
     --exclude='*node_modules*' \
+    --exclude='*/typings/*' \
+    --exclude='*/build/*' \
     ~/src /project
 }
 
