@@ -1,19 +1,49 @@
 #!/usr/bin/env bash
 
+# general START
+
 if [ -d /project/scripts ]; then chmod -R +x /project/scripts; fi
+if [ -f /project/provision/provision.sh ]; then chmod +x /project/provision/provision.sh; fi
 
 mkdir -p ~/logs
 
 if ! type jq > /dev/null 2>&1 ; then
   echo "installing basic packages"
   sudo apt-get update
-  sudo apt-get install -y curl git unzip ack-grep git-extras \
-    build-essential python-software-properties tree entr jq
+  sudo apt-get install -y curl git unzip git-extras exuberant-ctags\
+    build-essential python-software-properties tree entr htop jq
 
-  git config --global user.email "foo@bar.com" && git config --global user.name "Foo Bar"
+  git config --global user.email "foo@bar.com" && \
+    git config --global user.name "Foo Bar" && \
+    git config --global core.editor "vim"
 fi
 
-if [ ! -d ~/src ]; then cp -r /project/src ~; fi
+if [ ! -f ~/.acd_func ]; then
+  curl -o ~/.acd_func \
+    https://raw.githubusercontent.com/djoot/all-bash-history/master/acd_func.sh
+fi
+
+# shellcheck (without using stack, it takes a while to install)
+  # if [ ! -f ~/.cabal/bin/shellcheck ]; then
+  #   echo "installing shellcheck without using stack"
+  #   sudo apt-get install -y cabal-install
+  #   cabal update
+  #   cabal install shellcheck
+  # fi
+
+if [ ! -d ~/src ]; then
+  if [ -d /project/src ]; then cp -r /project/src ~; fi
+fi
+
+cat > ~/.bash_sources <<"EOF"
+source_if_exists() {
+  FILE_PATH=$1
+  if [ -f $FILE_PATH ]; then source $FILE_PATH; fi
+}
+
+source_if_exists ~/.acd_func
+source_if_exists ~/.bash_aliases
+EOF
 
 cat > ~/.bashrc <<"EOF"
 # move from word to word. avoid ctrl+b to use in tmux
@@ -23,45 +53,65 @@ cat > ~/.bashrc <<"EOF"
 stty -ixon # prevent the terminal from hanging on ctrl+s
 
 export HISTCONTROL=ignoreboth:erasedups
+export EDITOR=vim
 
-source_if_exists() {
-  FILE_PATH=$1
-  if [ -f $FILE_PATH ]; then source $FILE_PATH; fi
+if [[ -z $TMUX ]]; then
+  TMUX_PREFIX_A="" && TMUX_PREFIX_B="·"
+else
+  TMUX_PREFIX_A="{$(tmux display-message -p '#I')} " && TMUX_PREFIX_B="£"
+fi
+get_jobs_prefix() {
+  JOBS=$(jobs | wc -l)
+  if [ "$JOBS" -eq "0" ]; then echo ""; else echo "[$JOBS] "; fi
 }
-
-source_if_exists ~/.bash_aliases
-
-if [[ -z $TMUX ]]; then TMUX_PREFIX="·"; else TMUX_PREFIX="£"; fi
-PS1='${debian_chroot:+($debian_chroot)}\n\u@\h: \W$(__git_ps1) $TMUX_PREFIX '
-
-alias ll="ls -lah"
-alias rm="rm -rf"
-alias mkdir="mkdir -p"
-alias cp="cp -r"
-alias tmux="tmux; exit"
-alias Exit="killall tmux"
-
-Update_src() {
-  rm -rf /project/src
-  rsync -av \
-    --exclude='*node_modules*' \
-    --exclude='*/typings/*' \
-    --exclude='*/build/*' \
-    ~/src /project
-}
+PS1_BEGINNING="\n\[\e[34m\]\u\[\e[m\].\[\e[34m\]\h\[\e[m\]:\[\e[36m\] \W\[\e[m\]"
+PS1_MIDDLE="\[\e[32m\]\$(__git_ps1)\[\e[m\]\[\e[33m\] \$(get_jobs_prefix)$TMUX_PREFIX_A\[\e[m\]"
+PS1_END="\[\e[32m\]$TMUX_PREFIX_B\[\e[m\] "
+export PS1="$PS1_BEGINNING""$PS1_MIDDLE""$PS1_END"
 
 export PATH=$PATH:/project/scripts
 export PATH=$PATH:/project/provision
 export PATH=$PATH:~/.local/bin
 export PATH=$PATH:~/.cabal/bin
 
-# nodenv
-  export PATH=$PATH:/home/$USER/.nodenv/bin
-  export PATH=$PATH:/home/$USER/.nodenv/versions/6.3.0/bin/
-  eval "$(nodenv init -)"
-  source <(npm completion)
+source ~/.bash_sources
 
-if [ -d ~/src ]; then cd ~/src; fi
+if [ "$(pwd)" = "/home/$USER" ]; then
+  if [ -d ~/src ]; then cd ~/src; fi
+fi
+EOF
+
+cat > ~/.bash_aliases <<"EOF"
+alias ll="ls -lah"
+alias rm="rm -rf"
+alias mkdir="mkdir -p"
+alias cp="cp -r"
+
+DisplayFilesConcatenated(){ xargs tail -n +1 | sed "s|==>|\n\n\n\n\n$1==>|; s|<==|<==\n|" | vim -; }
+Find() { find "$@" ! -path "*node_modules*" ! -path "*.git*"; }
+GetProcessUsingPort(){ fuser $1/tcp; }
+MkdirCd(){ mkdir -p $1; cd $1; }
+Popd(){ popd -n +"$1" > /dev/null; cd --; }
+alias AliasesReload='source ~/.bash_aliases'
+alias ConfigureTimezone='sudo dpkg-reconfigure tzdata'
+alias EditProvision="vim /project/provision/provision.sh && provision.sh"
+alias Exit="killall tmux > /dev/null 2>&1 || exit"
+alias Tmux="tmux; exit"
+
+alias GitStatus='git status -u'
+GitAdd() { git add -A $@; GitStatus; }
+GitResetLastCommit() { LAST_COMMIT_MESSAGE=$(git log -1 --pretty=%B); \
+  git reset --soft HEAD^; git add -A .; git commit -m "$LAST_COMMIT_MESSAGE"; }
+alias GitAddAll='GitAdd .'
+alias GitCommit='git commit -m'
+alias GitEditorCommit='git commit -v'
+
+UpdateSrc() {
+  rm -rf /project/src
+  rsync -av \
+    --exclude='*node_modules*' \
+    ~/src /project
+}
 EOF
 
 cat > ~/.tmux.conf <<"EOF"
@@ -72,30 +122,9 @@ bind-key S-Left swap-window -t -1
 bind-key S-Right swap-window -t +1
 EOF
 
-NODE_VERSION=6.3.0
+# general END
 
-if [ ! -f ~/node-installation-finished ]; then
-  echo "setup node with nodenv"
-  sudo add-apt-repository -y ppa:chris-lea/node.js && \
-    sudo apt-get update && \
-    sudo curl -O -L https://npmjs.org/install.sh | sh && \
-    if [ ! -d ~/.nodenv ]; then git clone https://github.com/nodenv/nodenv.git ~/.nodenv && cd ~/.nodenv && src/configure && make -C src; fi && \
-    export PATH=$PATH:/home/$USER/.nodenv/bin && \
-    eval "$(nodenv init -)" && \
-    if [ ! -d ~/.nodenv/plugins/node-build ]; then git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-build; fi && \
-    if [ ! -d .nodenv/versions/$NODE_VERSION ]; then nodenv install $NODE_VERSION; fi && \
-    nodenv global $NODE_VERSION && \
-    touch ~/node-installation-finished
-fi
-
-GLOBAL_NPM_MODULES=(http-server diff-so-fancy eslint babel-eslint)
-
-for MODULE_NAME in "${GLOBAL_NPM_MODULES[@]}"; do
-  if [ ! -d ~/.nodenv/versions/$NODE_VERSION/lib/node_modules/$MODULE_NAME ]; then
-    echo "doing: npm i -g $MODULE_NAME"
-    npm i -g $MODULE_NAME
-  fi
-done
+# vim START
 
 install_vim_package() {
   REPO=$1
@@ -113,26 +142,50 @@ if [ ! -f ~/.vim/autoload/pathogen.vim ]; then
     > ~/.vim/autoload/pathogen.vim
 fi
 
+# not functional yet
+if ! type nvim > /dev/null 2>&1 ; then
+  sudo add-apt-repository -y ppa:neovim-ppa/unstable
+  sudo apt-get update && sudo apt-get install -y neovim
+  mkdir -p ~/.config
+  rm -rf ~/.config/nvim
+  ln -s ~/.vim ~/.config/nvim
+  ln -s ~/.vimrc ~/.config/nvim/init.vim
+fi
+
 install_vim_package airblade/vim-gitgutter
 install_vim_package ctrlpvim/ctrlp.vim
+install_vim_package easymotion/vim-easymotion
 install_vim_package elzr/vim-json
+install_vim_package evidens/vim-twig
+install_vim_package haya14busa/incsearch.vim
+install_vim_package honza/vim-snippets
+install_vim_package jelera/vim-javascript-syntax
 install_vim_package jiangmiao/auto-pairs
+install_vim_package luochen1990/rainbow
+install_vim_package mbbill/undotree
 install_vim_package milkypostman/vim-togglelist
-install_vim_package nathanaelkane/vim-indent-guides
 install_vim_package ntpeters/vim-better-whitespace
 install_vim_package plasticboy/vim-markdown
 install_vim_package scrooloose/nerdcommenter
 install_vim_package scrooloose/syntastic
 install_vim_package shougo/neocomplete.vim "sudo apt-get install -y vim-nox"
+install_vim_package shougo/neosnippet.vim
 install_vim_package shougo/vimproc.vim "cd ~/.vim/bundle/vimproc.vim && make; cd -"
+install_vim_package takac/vim-hardtime
+install_vim_package terryma/vim-expand-region
+install_vim_package tpope/vim-fugitive
+install_vim_package tpope/vim-repeat
+install_vim_package tpope/vim-surround
 install_vim_package vim-airline/vim-airline
 install_vim_package vim-airline/vim-airline-themes
+install_vim_package vim-ruby/vim-ruby
 install_vim_package vim-scripts/cream-showinvisibles
-install_vim_package evidens/vim-twig
-install_vim_package honza/vim-snippets
-install_vim_package Shougo/neosnippet.vim
-install_vim_package leafgarland/typescript-vim
-install_vim_package quramy/tsuquyomi
+install_vim_package yggdroot/indentLine
+
+cat > ~/.inputrc <<"EOF"
+set show-all-if-ambiguous on
+Control-x: "fg\n"
+EOF
 
 cat > ~/.vimrc <<"EOF"
 execute pathogen#infect()
@@ -140,8 +193,30 @@ filetype plugin indent on
 syntax on
 set background=dark
 
+let mapleader = "\<Space>"
+let g:hardtime_default_on = 1
+
 " fix control + arrows
   set term=xterm
+
+" buffers
+  nnoremap <F10> :buffers<CR>:buffer<Space>
+  nnoremap <silent> <F12> :bn<CR>
+  nnoremap <silent> <S-F12> :bp<CR>
+
+" don't copy when using del
+  vnoremap <Del> "_d
+  nnoremap <Del> "_d
+
+" numbers maps
+  set relativenumber
+  nnoremap <leader>h :set relativenumber!<CR>
+
+" open file in same dir
+  map ,e :e <C-R>=expand("%:p:h") . "/" <CR>
+
+" replace selection
+  vmap <leader>g y:%s/<C-r>"//g<left><left>
 
 " prevent saving backup files
   set nobackup
@@ -149,6 +224,11 @@ set background=dark
 
 " support all hex colors (e.g. for syntastic)
   set  t_Co=256
+
+" incsearch.vim
+  map /  <Plug>(incsearch-forward)
+  map ?  <Plug>(incsearch-backward)
+  map g/ <Plug>(incsearch-stay)
 
 " move lines up and down
   nnoremap <C-j> :m .+1<CR>==
@@ -161,6 +241,23 @@ set background=dark
 " remove trailing spaces
   nmap <leader>t :%s/\s\+$<CR><C-o>
 
+" folding
+  set foldmethod=indent
+  set nofoldenable
+  set fml=0
+  set nowrap
+  hi Folded ctermbg=236
+
+" improve indentation
+  xnoremap <Tab> >gv
+  xnoremap <S-Tab> <gv
+
+" to easily copy with the mouse
+  nnoremap <leader>n :set number!<CR>:GitGutterToggle<CR>
+
+" fix c-b mapping to use with tmux (one page up)
+  nnoremap <C-d> <c-b>
+
 set autoindent
 set clipboard=unnamedplus
 set cursorline
@@ -169,9 +266,23 @@ set number
 set shiftwidth=2
 set softtabstop=2
 set tabstop=2
+set smartcase
+set wildmenu
+
+" better completion menu colors
+  highlight Pmenu ctermfg=white ctermbg=17
+  highlight PmenuSel ctermfg=white ctermbg=29
+
+" ignore case in searches
+  set ic
+
+nnoremap <C-w>v :vsplit<CR><C-w><right>
+nnoremap <leader>w :set wrap!<CR>
 
 " airline
   set laststatus=2
+  let g:airline_left_sep=''
+  let g:airline_right_sep=''
 
 " remove autoindentation when pasting
   set pastetoggle=<F2>
@@ -180,19 +291,18 @@ set tabstop=2
   let g:neocomplete#enable_at_startup = 1
 
 let g:vim_markdown_folding_disabled = 1
-let g:vim_markdown_conceal=0
+let g:vim_markdown_conceal = 0
 let g:NERDSpaceDelims = 1
+let g:rainbow_active = 1
 
 " ctrlp
   let g:ctrlp_map = '<c-p>'
   let g:ctrlp_cmd = 'CtrlP'
+  let g:ctrlp_show_hidden = 1
   let g:ctrlp_custom_ignore = '\v[\/](node_modules|target|dist)|(\.(swp|ico|git|svn))$'
   nnoremap <leader>p :CtrlP %:p:h<CR> " CtrlP in file's dir
 
 " syntastic
-  let g:syntastic_mode_map = { 'mode': 'active',
-                            \ 'active_filetypes': ['python', 'javascript'],
-                            \ 'passive_filetypes': [] }
   set statusline+=%#warningmsg#
   set statusline+=%{SyntasticStatuslineFlag()}
   set statusline+=%*
@@ -211,6 +321,7 @@ let g:NERDSpaceDelims = 1
   let g:syntastic_style_error_symbol = '⁉️'
   hi Error ctermbg=lightred ctermfg=black
   hi SpellBad ctermbg=lightred ctermfg=black
+  nnoremap <leader>o :SyntasticToggleMode<CR>
 
 map ,e :e <C-R>=expand("%:p:h") . "/" <CR>
 
@@ -221,25 +332,24 @@ map ,e :e <C-R>=expand("%:p:h") . "/" <CR>
   nnoremap ,cd :cd %:p:h<CR>:pwd<CR>
 
 " run macro on d
-  nnoremap <Space> @d
+  nnoremap <leader>d @d
 
 " sort lines
-  vmap <F5> :sort<CR>
+  vmap <F3> :sort<CR>
 
 inoremap <C-e> <Esc>A
 inoremap <C-a> <Esc>I
 
-" save file shortcuts
-  nmap <C-s> :update<Esc>
-  inoremap <C-s> <Esc>:update<Esc>i<right>
-
-" copy - paste between files
-  vmap <leader>ky :w! /tmp/vitmp<CR>
-  nmap <leader>kp :r! cat /tmp/vitmp<CR>
-
-" improve the 'preview window' behaviour
-  autocmd CompleteDone * pclose " close when done
-  set splitbelow " move to the bottom
+" vp doesn't replace paste buffer
+  function! RestoreRegister()
+    let @" = s:restore_reg
+    return ''
+  endfunction
+  function! s:Repl()
+    let s:restore_reg = @"
+    return "p@=RestoreRegister()\<cr>"
+  endfunction
+  vmap <silent> <expr> p <sid>Repl()
 
 " neosnippet
   imap <C-l>     <Plug>(neosnippet_expand_or_jump)
@@ -256,28 +366,102 @@ inoremap <C-a> <Esc>I
   endif
   let g:neosnippet#snippets_directory='~/.vim/bundle/vim-snippets/snippets'
   let g:neosnippet#disable_runtime_snippets={'c' : 1, 'cpp' : 1,}
+
+" save file shortcuts
+  nmap <C-s> :update<Esc>
+  inoremap <C-s> <Esc>:update<CR>
+
+" copy - paste between files and vms
+  vmap <leader>fy :w! /shared/_vitmp<CR>
+  nmap <leader>fp :r! cat /shared/_vitmp<CR>
+
+" improve the 'preview window' behaviour
+  autocmd CompleteDone * pclose " close when done
+  set splitbelow " move to the bottom
+
+" vim-expand-region
+  vmap v <Plug>(expand_region_expand)
+  vmap <C-v> <Plug>(expand_region_shrink)
+
+" search and replace (using cs on first match and n.n.n.)
+  vnoremap <silent> s //e<C-r>=&selection=='exclusive'?'+1':''<CR><CR>
+      \:<C-u>call histdel('search',-1)<Bar>let @/=histget('search',-1)<CR>gv
+  omap s :normal vs<CR>
+
+" autocmd Filetype sh setlocal softtabstop=2 tabstop=2 shiftwidth=2
+
+" quickly move to lines
+  nnoremap <CR> G
+  nnoremap <BS> gg
+" undo tree
+  nnoremap <leader>m :UndotreeShow<CR><C-w><left>
 EOF
 
-# examples
+# vim END
 
-clone_example_from_gh() {
-  PARENT_PATH=~/examples/$1
-  REPO_URL=https://github.com/$2.git
-  DIR=$(echo $2 | sed -r "s|(.+)/(.+)|\1_-_\2|") # foo/bar => foo_-_bar
-  COMMIT=$3
-  FULL_PATH=$PARENT_PATH/$DIR
-  mkdir -p $PARENT_PATH
-  if [ ! -d $FULL_PATH ]; then
-    git clone $REPO_URL $FULL_PATH
-    cd $FULL_PATH
-    git reset --hard $COMMIT > /dev/null 2>&1
-    cd - > /dev/null 2>&1
-  fi
+# js START
+
+NODE_VERSION=6.3.0
+if [ ! -f ~/.node-installation-finished ]; then
+  echo "setup node with nodenv"
+  cd ~
+  sudo add-apt-repository -y ppa:chris-lea/node.js && \
+    sudo apt-get update && \
+    sudo curl -O -L https://npmjs.org/install.sh | sh && \
+    if [ ! -d ~/.nodenv ]; then git clone https://github.com/nodenv/nodenv.git ~/.nodenv && cd ~/.nodenv && src/configure && make -C src; fi && \
+    export PATH=$PATH:/home/$USER/.nodenv/bin && \
+    eval "$(nodenv init -)" && \
+    if [ ! -d ~/.nodenv/plugins/node-build ]; then git clone https://github.com/nodenv/node-build.git $(nodenv root)/plugins/node-build; fi && \
+    if [ ! -d .nodenv/versions/$NODE_VERSION ]; then nodenv install $NODE_VERSION; fi && \
+    nodenv global $NODE_VERSION && \
+    touch ~/.node-installation-finished
+  rm -f ~/install.sh
+fi
+
+install_node_modules() {
+  for MODULE_NAME in "$@"; do
+    if [ ! -d ~/.nodenv/versions/$NODE_VERSION/lib/node_modules/$MODULE_NAME ]; then
+      echo "doing: npm i -g $MODULE_NAME"
+      npm i -g $MODULE_NAME
+    fi
+  done
 }
 
-clone_example_from_gh typescript ReactiveX/rxjs e20cdb73e9
-clone_example_from_gh typescript searchkit/searchkit-demo 1dbfe2c96
-clone_example_from_gh typescript remojansen/TypeScriptTestingExamples 626500d5
-clone_example_from_gh typescript Vadorequest/sails-typescript fd541f3a
+install_node_modules http-server diff-so-fancy yarn
+
+cat >> ~/.bashrc <<"EOF"
+
+export PATH=$PATH:/home/$USER/.nodenv/bin
+export PATH=$PATH:/home/$USER/.nodenv/versions/6.3.0/bin/
+eval "$(nodenv init -)"
+source <(npm completion)
+EOF
+
+cat >> ~/.bash_aliases <<"EOF"
+
+alias Serve="http-server -c-1 -p 9000"
+GitDiff() { git diff --color $@ | diff-so-fancy | less -R; }
+EOF
+
+# not installing vim-javascript as it doesn't work with rainbow
+install_vim_package kchmck/vim-coffee-script
+install_vim_package leafgarland/typescript-vim
+install_vim_package quramy/tsuquyomi
+
+cat >> ~/.vimrc <<"EOF"
+
+" quick console.log , once it finishes: <C-n> s
+  let ConsoleMapping="nnoremap <leader>k iconsole.log('a', a);<C-c>hhhhhhh"
+  autocmd FileType javascript :exe ConsoleMapping
+  autocmd FileType typescript :exe ConsoleMapping
+EOF
+
+# js END
+
+# custom START
+
+install_node_modules eslint babel-eslint
+
+# custom END
 
 echo "finished provisioning"
