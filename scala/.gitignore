@@ -1,0 +1,11 @@
+.metadata
+.project
+.classpath
+.settings
+.recommenders
+bin/
+build/
+.gradle/
+target/
+gradlew
+.cache-main

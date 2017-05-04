@@ -24,6 +24,7 @@ export type JSONGraph = {
 export type StatementTypeNode = "node"
 export type StatementTypeEdge = "edge"
 export type StatementTypeMisc = "misc"
+export type StatementType = StatementTypeNode | StatementTypeEdge | StatementTypeMisc
 export type DotStatementNodeId = string
 export type DotStatementEdgeFrom = DotStatementNodeId
 export type DotStatementEdgeTo = DotStatementNodeId

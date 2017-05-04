@@ -1,0 +1,11 @@
+.classpath
+.gradle/
+.metadata
+.project
+.recommenders
+.settings
+.syntastic_javac_config
+bin/
+build/
+gradlew
+target/

@@ -11,12 +11,16 @@ import type {
   DotGraphType,
   DotStatement,
   DotStatementEdge,
-  DotStatementNode,
   DotStatementMisc,
+  DotStatementNode,
   JSONEdge,
   JSONGraph,
   JSONMisc,
   JSONNode,
+  StatementType,
+  StatementTypeEdge,
+  StatementTypeMisc,
+  StatementTypeNode,
 } from "./types"
 
 function getNodeStatementsFromNodes(nodes: JSONNode[]): DotStatementNode[] {
@@ -39,6 +43,10 @@ function getEdgeStatementsFromEdges(edges: JSONEdge[]): DotStatementEdge[] {
 }
 
 function getMiscStatementsFromMisc(misc: JSONMisc[]): DotStatementMisc[] {
+  if (!misc) {
+    return []
+  }
+
   return misc.map((m: JSONMisc): DotStatementMisc => {
     return {
       key: m.key,
@@ -65,9 +73,29 @@ function wrapStrWithGraphType(str: string, dt: DotGraphType): string {
   return `${dt} { ${str} }`
 }
 
-function parseStatements(s: DotStatement[]): string {
-  return s.reduce((): string => {
-    return "foo"
+function parseNodeStatement(n: DotStatementNode): string {
+  return n.id
+}
+
+function parseEdgeStatement(e: DotStatementEdge): string {
+  return e.from
+}
+
+function parseMiscStatement(m: DotStatementMisc): string {
+  return m.type
+}
+
+const dotStatementTypeToParseFn: {
+  [key: StatementType]: (a: DotStatement) => string,
+} = {
+  "edge": parseEdgeStatement,
+  "misc": parseMiscStatement,
+  "node": parseNodeStatement,
+}
+
+function parseStatements(sts: DotStatement[]): string {
+  return sts.reduce((acc: string, st: DotStatement): string => {
+    return `${acc}\n${dotStatementTypeToParseFn[st.type](st)}`
   }, "")
 }
 
