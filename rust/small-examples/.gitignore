@@ -1,0 +1,2 @@
+# For small examples it is not necessary to include the lockfile
+Cargo.lock
