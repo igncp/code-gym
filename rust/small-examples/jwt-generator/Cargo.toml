@@ -1,0 +1,10 @@
+[package]
+name = "jwt-generator"
+version = "0.1.0"
+authors = ["Ignacio Carbajo <icarbajop@gmail.com>"]
+
+[dependencies]
+jsonwebtoken = "2"
+serde = "1.0"
+serde_derive = "1.0"
+progress = "0.1"
