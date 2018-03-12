@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Flexbox 02</title>
+    </head>
+    <body>
+        <div id="container">
+            <div id="item-1" class="item">Item 1</div>
+            <div id="item-2" class="item">Item 2</div>
+            <div id="item-3" class="item">Item 3</div>
+        </div>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+}
+
+#container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#item-2 {
+    flex-grow: 2;
+}
+
+.item {
+    border: 1px solid black;
+    flex-grow: 1;
+}
+</style>
+    </body>
+</html>

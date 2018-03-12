@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Flexbox 01</title>
+    </head>
+    <body>
+        <div id="container">
+            <div id="item-1" class="item">Item 1</div>
+            <div id="item-2" class="item">Item 2</div>
+            <div id="item-3" class="item">Item 3</div>
+        </div>
+<style>
+#container {
+    display: flex;
+    flex-direction: row-reverse;
+}
+
+.item {
+    flex-grow: 1;
+}
+</style>
+    </body>
+</html>
