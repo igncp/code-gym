@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width" />
+        <title>Flexbox 04</title>
+    </head>
+    <body>
+        <div id="container">
+            <div class="row">
+                <div id="item-1" class="item">Item 1</div>
+                <div id="item-2" class="item">Item 2</div>
+                <div id="item-3" class="item">Item 3</div>
+            </div>
+            <div class="row">
+                <div id="item-4" class="item">Item 4</div>
+                <div id="item-5" class="item">Item 5</div>
+                <div id="item-6" class="item">Item 6</div>
+            </div>
+            <div class="row">
+                <div id="item-7" class="item">Item 7</div>
+                <div id="item-8" class="item">Item 8</div>
+                <div id="item-9" class="item">Item 9</div>
+            </div>
+        </div>
+<style>
+html, body {
+    height: 100%;
+    margin: 0;
+}
+#container {
+    display: flex;
+    height: 100%;
+}
+.item {
+    border: 1px solid black;
+    margin: 1px;
+}
+</style>
+
+<style>
+#container {
+    flex-direction: column;
+}
+
+.row {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+}
+
+.item {
+    align-items: center;
+    display: flex;
+    flex-grow: 1;
+    justify-content: center;
+}
+
+.row,
+.item {
+    transition: flex-grow .2s linear;
+}
+
+.row:hover,
+.item:hover {
+    flex-grow: 4;
+}
+</style>
+    </body>
+</html>
