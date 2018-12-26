@@ -1,5 +1,5 @@
 fn main() {
-    let str = "Hola mundo!";
+  let str = "Hola mundo!";
 
-    println!("{}", str);
+  println!("{}", str);
 }
