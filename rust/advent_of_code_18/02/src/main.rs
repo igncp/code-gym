@@ -2,9 +2,11 @@
 
 https://adventofcode.com/2018/day/2
 
---- Day 2: Inventory Management System --- You stop falling through time, catch your breath, and
-check the screen on the device. "Destination reached. Current Year: 1518. Current Location: North
-Pole Utility Closet 83N10." You made it! Now, to find those anomalies.
+--- Day 2: Inventory Management System ---
+
+You stop falling through time, catch your breath, and check the screen on the device. "Destination
+reached. Current Year: 1518. Current Location: North Pole Utility Closet 83N10." You made it! Now,
+to find those anomalies.
 
 Outside the utility closet, you hear footsteps and a voice. "...I'm not sure either. But now that
 so many people have chimneys, maybe he could sneak in that way?" Another voice responds, "Actually,
@@ -204,9 +206,10 @@ mod tests {
   fn test_get_checksum_of_ids() {
     let ids = vec![
       "abcdef", "bababc", "abbcde", "abcccd", "aabcdd", "abcdee", "ababab",
-    ].iter()
-      .map(|x| x.to_string())
-      .collect();
+    ]
+    .iter()
+    .map(|x| x.to_string())
+    .collect();
     let checksum = get_checksum_of_ids(&ids);
 
     assert_eq!(12, checksum);
@@ -216,9 +219,10 @@ mod tests {
   fn test_get_ids_with_one_letter_different() {
     let ids = vec![
       "abcde", "fghij", "klmno", "pqrst", "fguij", "axcye", "wvxyz",
-    ].iter()
-      .map(|x| x.to_string())
-      .collect();
+    ]
+    .iter()
+    .map(|x| x.to_string())
+    .collect();
     let new_ids = get_ids_with_one_letter_different(&ids);
 
     assert_eq!(2, new_ids.iter().count());

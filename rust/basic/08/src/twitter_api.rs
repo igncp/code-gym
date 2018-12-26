@@ -19,7 +19,7 @@ use std::collections::HashMap;
 use std::io;
 use std::string;
 
-error_chain!{
+error_chain! {
     links {
         OAuth(oauth::Error, oauth::ErrorKind);
     }
@@ -130,7 +130,8 @@ pub fn print_tweets_json(consumer: &Token, access: &Token) {
     consumer,
     Some(access),
     None,
-  ).unwrap();
+  )
+  .unwrap();
   let last_tweets_json = String::from_utf8(bytes);
   let last_tweets_str = last_tweets_json.unwrap();
   let mut deserializer = serde_json::Deserializer::from_str(&last_tweets_str);

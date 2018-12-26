@@ -14,7 +14,8 @@ fn clear_console() {
     termion::clear::All,
     termion::cursor::Goto(1, 1),
     termion::cursor::Hide,
-  ).unwrap();
+  )
+  .unwrap();
 }
 
 fn write_list(opts: &Vec<&str>, sel: usize) {
