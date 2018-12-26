@@ -2,6 +2,7 @@
 
 https://adventofcode.com/2018
 
-## Problems
+## Days
 
-- [01](./01)
+- [01](./01/src/main.rs)
+- [02](./02/src/main.rs)
