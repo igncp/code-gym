@@ -7,3 +7,4 @@ https://adventofcode.com/2018
 - [01](./01/src/main.rs)
 - [02](./02/src/main.rs)
 - [03](./03/src/main.rs)
+- [04](./04/src/main.rs)

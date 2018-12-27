@@ -76,7 +76,17 @@ found them. You'll need to organize them before they can be analyzed.
 
 What is the ID of the guard you chose multiplied by the minute you chose? (In the above example,
                                                                            the answer would be 10 *
-                                                                           24 = 240.)
+
+--- Part Two ---
+
+Strategy 2: Of all guards, which guard is most frequently asleep on the same minute?
+
+In the example above, Guard #99 spent minute 45 asleep more than any other guard or minute - three
+times in total. (In all other cases, any guard spent any minute asleep at most twice.)
+
+What is the ID of the guard you chose multiplied by the minute you chose? (In the above example,
+                                                                           the answer would be 99 *
+                                                                           45 = 4455.)
 
 */
 
@@ -89,7 +99,7 @@ use std::io::prelude::*;
 
 use log_entry::{
   build_guard_id_to_slept_minutes_map, get_guard_id_with_most_sleeping_minutes,
-  get_most_slept_minute_for_guard, LogEntry,
+  get_guard_with_most_sleep_on_same_minute, get_most_slept_minute_for_guard, LogEntry,
 };
 
 fn get_log_entries() -> Vec<LogEntry> {
@@ -119,6 +129,8 @@ fn main() {
     &guard_id_to_slept_minutes_map,
     guard_id_with_most_sleeping_minutes,
   );
+  let (guard_id_with_most_sleep, minute_with_most_sleep, _) =
+    get_guard_with_most_sleep_on_same_minute(&guard_id_to_slept_minutes_map);
 
   println!("Results:");
   println!(
@@ -127,9 +139,10 @@ fn main() {
     most_slept_minute_for_guard,
     guard_id_with_most_sleeping_minutes * most_slept_minute_for_guard
   );
-}
-
-#[cfg(test)]
-mod tests {
-  use super::*;
+  println!(
+    "- (2) guard id: {}, most slept minute: {}, total: {}",
+    guard_id_with_most_sleep,
+    minute_with_most_sleep,
+    guard_id_with_most_sleep * minute_with_most_sleep
+  );
 }
