@@ -104,14 +104,11 @@ fn get_shortest_polymer_length_by_removing_one_type(polymer: Polymer) -> usize {
     let mut new_polymer = polymer.clone();
     let letter_uppercase = letter.to_uppercase().to_string();
 
-    new_polymer.retain(|&c| {
-      c.to_uppercase().to_string() != letter_uppercase
-    });
+    new_polymer.retain(|&c| c.to_uppercase().to_string() != letter_uppercase);
 
     new_polymer = react(new_polymer);
 
     let len = new_polymer.len();
-
 
     if len < lowest {
       lowest = len;
