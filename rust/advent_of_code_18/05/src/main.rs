@@ -33,96 +33,121 @@ After all possible reactions, the resulting polymer contains 10 units.
 How many units remain after fully reacting the polymer you scanned? (Note: in this puzzle and
 others, the input is large; if you copy/paste your input, make sure you get the whole thing.)
 
+--- Part Two ---
+
+Time to improve the polymer.
+
+One of the unit types is causing problems; it's preventing the polymer from collapsing as much as
+it should. Your goal is to figure out which unit type is causing the most problems, remove all
+instances of it (regardless of polarity), fully react the remaining polymer, and measure its
+length.
+
+For example, again using the polymer dabAcCaCBAcCcaDA from above:
+
+Removing all A/a units produces dbcCCBcCcD. Fully reacting this polymer produces dbCBcD, which has length 6.
+Removing all B/b units produces daAcCaCAcCcaDA. Fully reacting this polymer produces daCAcaDA, which has length 8.
+Removing all C/c units produces dabAaBAaDA. Fully reacting this polymer produces daDA, which has length 4.
+Removing all D/d units produces abAcCaCBAcCcaA. Fully reacting this polymer produces abCBAc, which has length 6.
+
+In this example, removing all C/c units was best, producing the answer 4.
+
+What is the length of the shortest polymer you can produce by removing all units of exactly one
+type and fully reacting the result?
+
 */
 
 use std::fs::File;
 use std::io::prelude::*;
 
-type Polymer = String;
+type Polymer = Vec<char>;
 
-fn get_input_polymer() -> String {
+fn get_input_polymer() -> Polymer {
   let mut file = File::open("src/input.txt").expect("Unable to open the file");
   let mut contents = String::new();
   file
     .read_to_string(&mut contents)
     .expect("Unable to read the file");
 
-  contents
+  contents.chars().collect()
 }
 
-fn get_are_char_opposites(a: char, b: char) -> bool {
-  if a == b {
-    return false;
-  }
+// optimized using: https://sts10.github.io/2018/12/07/optimizing-rust-advent-of-code-day-5.html
+// for exercise 1
+fn react(mut polymer: Polymer) -> Polymer {
+  let mut p_vec_len = polymer.len();
+  let mut previous_c: char;
+  let mut index = 1;
 
-  if a.to_uppercase().nth(0).unwrap() == b {
-    return true;
-  }
+  while index < p_vec_len {
+    previous_c = polymer[index - 1];
 
-  if a.to_lowercase().nth(0).unwrap() == b {
-    return true;
-  }
+    if do_these_two_chars_cancel(polymer[index], previous_c) {
+      polymer.drain((index - 1)..=index);
+      p_vec_len -= 2;
 
-  false
-}
-
-// TODO: Optmize, this gives the correct solution but takes around 5 mins
-fn parse_polymer(polymer: Polymer) -> Polymer {
-  let mut new_polymer = polymer.clone();
-
-  loop {
-    let mut has_finished = false;
-    let temp_polymer = new_polymer.clone();
-    let all_chars = temp_polymer.chars();
-    let length = all_chars.clone().count();
-
-    for (idx, c) in all_chars.clone().enumerate() {
-      if idx == 0 {
-        continue;
+      if index > 1 {
+        index -= 1
       }
-
-      let prev_char = all_chars.clone().nth(idx - 1).unwrap();
-
-      if get_are_char_opposites(prev_char, c) {
-        new_polymer = [
-          new_polymer[0..idx - 1].to_string(),
-          new_polymer[idx + 1..].to_string(),
-        ]
-        .join("");
-        break;
-      }
-
-      if idx == length - 1 {
-        has_finished = true;
-      }
-    }
-
-    if has_finished {
-      break;
+    } else {
+      index += 1;
     }
   }
 
-  new_polymer
+  polymer
+}
+
+fn get_shortest_polymer_length_by_removing_one_type(polymer: Polymer) -> usize {
+  let mut lowest = polymer.len();
+
+  for letter_num in b'a'..=b'z' {
+    let letter = letter_num as char;
+    let mut new_polymer = polymer.clone();
+    let letter_uppercase = letter.to_uppercase().to_string();
+
+    new_polymer.retain(|&c| {
+      c != letter
+          && c.to_uppercase().to_string() != letter_uppercase
+    });
+
+    new_polymer = react(new_polymer);
+
+    let len = new_polymer.len();
+
+
+    if len < lowest {
+      lowest = len;
+    }
+  }
+
+  lowest
+}
+
+fn do_these_two_chars_cancel(a: char, b: char) -> bool {
+  a.eq_ignore_ascii_case(&b) && a.is_uppercase() == b.is_lowercase()
 }
 
 fn main() {
   let start_polymer = get_input_polymer();
-  let result = parse_polymer(start_polymer);
+  let result_a = react(start_polymer.clone());
+  let result_b = get_shortest_polymer_length_by_removing_one_type(start_polymer.clone());
 
   println!("Results:");
-  println!("- (1) final polymer count: {}", result.chars().count());
+  println!("- (1) final polymer length: {}", result_a.len());
+  println!("- (2) final polymer length: {}", result_b);
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
 
-  #[test]
-  fn test_parse_polymer() {
-    fn test_this(s1: &str, s2: &str) {
-      let result = parse_polymer(s1.to_string());
+  use std::iter::FromIterator;
 
-      assert_eq!(result, s2);
+  #[test]
+  fn test_react() {
+    fn test_this(s1: &str, s2: &str) {
+      let result = react(s1.to_string().chars().collect());
+
+      assert_eq!(String::from_iter(result), s2);
     }
 
     test_this("dabAcCaCBAcCcaDA", "dabCBAcaDA");
@@ -130,11 +155,10 @@ mod tests {
   }
 
   #[test]
-  fn test_get_are_char_opposites() {
-    assert_eq!(get_are_char_opposites('a', 'A'), true);
-    assert_eq!(get_are_char_opposites('A', 'a'), true);
-    assert_eq!(get_are_char_opposites('a', 'a'), false);
-    assert_eq!(get_are_char_opposites('A', 'A'), false);
-    assert_eq!(get_are_char_opposites('b', 'A'), false);
+  fn test_get_shortest_polymer_length_by_removing_one_type() {
+    let polymer = "dabAcCaCBAcCcaDA".chars().collect();
+    let result = get_shortest_polymer_length_by_removing_one_type(polymer);
+
+    assert_eq!(result, 4);
   }
 }
