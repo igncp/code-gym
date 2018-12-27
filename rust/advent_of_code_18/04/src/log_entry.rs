@@ -138,7 +138,7 @@ pub fn build_guard_id_to_slept_minutes_map(entries: &Vec<LogEntry>) -> GuardIDTo
             for minute in current_minute..entry.minute {
               let existing_minute = match guard_map.get(&minute) {
                 Some(val) => val + 1,
-                None => 1
+                None => 1,
               };
 
               guard_map.insert(minute, existing_minute);
@@ -168,7 +168,6 @@ pub fn get_guard_id_with_most_sleeping_minutes(map: &GuardIDToSleptMinutes) -> u
     }
   }
 
-
   return current_match.0;
 }
 
@@ -184,7 +183,9 @@ pub fn get_most_slept_minute_for_guard(map: &GuardIDToSleptMinutes, guard_id: us
   return current_match.0;
 }
 
-pub fn get_guard_with_most_sleep_on_same_minute(map: &GuardIDToSleptMinutes) -> (GuardID, Minute, Minutes) {
+pub fn get_guard_with_most_sleep_on_same_minute(
+  map: &GuardIDToSleptMinutes,
+) -> (GuardID, Minute, Minutes) {
   let mut current_match = (0, 0, 0);
 
   for (guard_id, minutes_map) in map.iter() {
@@ -194,7 +195,6 @@ pub fn get_guard_with_most_sleep_on_same_minute(map: &GuardIDToSleptMinutes) -> 
       }
     }
   }
-
 
   return current_match;
 }
