@@ -85,9 +85,12 @@ struct Claim {
   height: usize,
 }
 
-fn parse_str_into_claim(full_str: &String) -> Result<Claim, String> {
-  let re = Regex::new(r"#(.+?) @ (.+?),(.+?): (.+?)x(.+?)$").unwrap();
-  let caps = re.captures(full_str).unwrap();
+fn build_claim_regex() -> Regex {
+  Regex::new(r"#(.+?) @ (.+?),(.+?): (.+?)x(.+?)$").unwrap()
+}
+
+fn parse_str_into_claim(full_str: &str, reg: &mut Regex) -> Result<Claim, String> {
+  let caps = reg.captures(full_str).unwrap();
 
   let claim = Claim {
     id: caps.get(1).unwrap().as_str().to_string(),
@@ -107,9 +110,11 @@ fn get_claims() -> Vec<Claim> {
     .read_to_string(&mut contents)
     .expect("Unable to read the file");
 
+  let mut reg = build_claim_regex();
+
   let claims: Vec<Claim> = contents
     .lines()
-    .map(|x| parse_str_into_claim(&x.to_string()).unwrap())
+    .map(|x| parse_str_into_claim(&x, &mut reg).unwrap())
     .collect();
 
   claims
@@ -118,7 +123,23 @@ fn get_claims() -> Vec<Claim> {
 type CoveredSquares = HashMap<(usize, usize), usize>;
 
 fn get_covered_squares(claims: &Vec<Claim>) -> CoveredSquares {
-  let mut covered_squares = HashMap::new();
+  let mut max_x = 0;
+  let mut max_y = 0;
+
+  for claim in claims {
+    let new_x = claim.left_inches + claim.width;
+    let new_y = claim.top_inches + claim.height;
+
+    if new_x > max_x {
+      max_x = new_x;
+    }
+
+    if new_y > max_y {
+      max_y = new_y;
+    }
+  }
+
+  let mut covered_squares = HashMap::with_capacity(max_x * max_y);
 
   for claim in claims {
     for x in claim.left_inches..(claim.left_inches + claim.width) {
@@ -134,12 +155,16 @@ fn get_covered_squares(claims: &Vec<Claim>) -> CoveredSquares {
 
 fn get_overlapping_claims_squares_count(
   claims: &Vec<Claim>,
-  covered_squares: Option<CoveredSquares>,
+  covered_squares: Option<&mut CoveredSquares>,
 ) -> usize {
-  let covered_squares = covered_squares.unwrap_or(get_covered_squares(&claims));
+  let mut r: CoveredSquares = match covered_squares {
+    Some(_) => HashMap::new(),
+    None => get_covered_squares(&claims),
+  };
+  let covered_squares = covered_squares.unwrap_or(&mut r);
   let mut num = 0;
 
-  for &value in covered_squares.values() {
+  for &mut value in covered_squares.values_mut() {
     if value > 1 {
       num += 1;
     }
@@ -150,9 +175,13 @@ fn get_overlapping_claims_squares_count(
 
 fn get_claims_without_overlap(
   claims: &Vec<Claim>,
-  covered_squares: Option<CoveredSquares>,
+  covered_squares: Option<&mut CoveredSquares>,
 ) -> Vec<String> {
-  let covered_squares = covered_squares.unwrap_or(get_covered_squares(&claims));
+  let mut r: CoveredSquares = match covered_squares {
+    Some(_) => HashMap::new(),
+    None => get_covered_squares(&claims),
+  };
+  let covered_squares = covered_squares.unwrap_or(&mut r);
   let mut found_claims = vec![];
 
   for claim in claims {
@@ -165,12 +194,18 @@ fn get_claims_without_overlap(
 
         if *counter != 1 {
           is_valid = false;
+          break;
         }
+      }
+
+      if is_valid != true {
+        break;
       }
     }
 
     if is_valid {
       found_claims.push(claim.id.clone());
+      break;
     }
   }
 
@@ -179,11 +214,12 @@ fn get_claims_without_overlap(
 
 fn main() {
   let claims = get_claims();
-  let covered_squares = get_covered_squares(&claims);
+
+  let mut covered_squares = get_covered_squares(&claims);
 
   let overlapping_squares =
-    get_overlapping_claims_squares_count(&claims, Some(covered_squares.clone()));
-  let claims_without_overlap = get_claims_without_overlap(&claims, Some(covered_squares.clone()));
+    get_overlapping_claims_squares_count(&claims, Some(&mut covered_squares));
+  let claims_without_overlap = get_claims_without_overlap(&claims, Some(&mut covered_squares));
 
   if claims_without_overlap.iter().count() != 1 {
     panic!("Unexpected num of claims withtou overlap");
@@ -201,9 +237,13 @@ fn main() {
 mod tests {
   use super::*;
 
+  fn parse_str_into_claim_with_regex(s: &str) -> Result<Claim, String> {
+    parse_str_into_claim(&s.to_string(), &mut build_claim_regex())
+  }
+
   #[test]
   fn test_parse_str_into_claim() {
-    let result = parse_str_into_claim(&"#1 @ 2,3: 4x5".to_string()).unwrap();
+    let result = parse_str_into_claim_with_regex("#1 @ 2,3: 4x5").unwrap();
     assert_eq!(
       Claim {
         id: "1".to_string(),
@@ -263,8 +303,8 @@ mod tests {
   #[test]
   fn test_get_overlapping_claims_squares_count_3() {
     let claims = vec![
-      parse_str_into_claim(&"#1 @ 100,50: 1x100".to_string()).unwrap(),
-      parse_str_into_claim(&"#2 @ 100,50: 1x100".to_string()).unwrap(),
+      parse_str_into_claim_with_regex("#1 @ 100,50: 1x100").unwrap(),
+      parse_str_into_claim_with_regex("#2 @ 100,50: 1x100").unwrap(),
     ];
 
     assert_eq!(get_overlapping_claims_squares_count(&claims, None), 100);
@@ -273,9 +313,9 @@ mod tests {
   #[test]
   fn test_get_overlapping_claims_squares_count_example() {
     let claims = vec![
-      parse_str_into_claim(&"#1 @ 1,3: 4x4".to_string()).unwrap(),
-      parse_str_into_claim(&"#2 @ 3,1: 4x4".to_string()).unwrap(),
-      parse_str_into_claim(&"#3 @ 5,5: 2x2".to_string()).unwrap(),
+      parse_str_into_claim_with_regex("#1 @ 1,3: 4x4").unwrap(),
+      parse_str_into_claim_with_regex("#2 @ 3,1: 4x4").unwrap(),
+      parse_str_into_claim_with_regex("#3 @ 5,5: 2x2").unwrap(),
     ];
 
     assert_eq!(get_overlapping_claims_squares_count(&claims, None), 4);
