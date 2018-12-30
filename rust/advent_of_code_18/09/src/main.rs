@@ -71,7 +71,15 @@ Here are a few more examples:
 
 What is the winning Elf's score?
 
+--- Part Two ---
+
+Amused by the speed of your answer, the Elves are curious:
+
+What would the new winning Elf's score be if the number of the last marble were 100 times larger?
+
 */
+
+use std::collections::VecDeque;
 
 type PlayersNum = usize;
 type Score = usize;
@@ -90,20 +98,17 @@ fn get_idx_to_substract(idx: usize, total: usize, to_remove: usize) -> usize {
   result as usize
 }
 
-fn get_high_score_for_game_description(
-  game_description: GameDescription,
-) -> (Score, Vec<(usize, Vec<usize>)>) {
+// First personal implementation (not using a deque), time for 1st problem is ok (<5 seconds) but
+// not for 2nd (> 1 minute)
+fn get_high_score_for_game_description(game_description: GameDescription) -> Score {
   let (players_num, last_marble_score) = game_description;
   let mut players_scores: Vec<Score> = vec![];
   let mut marbles = vec![0];
-  let mut first_marbles_combinations: Vec<(usize, Vec<usize>)> = vec![];
 
   let mut current_marble_idx = 0;
   let mut current_player_idx = players_num - 1;
   let mut current_marble_value = 0;
   let mut marbles_since_last_score = 0;
-
-  let mut has_reached_score = false;
 
   for player_idx in 0..players_num {
     players_scores.insert(player_idx, 0);
@@ -132,10 +137,6 @@ fn get_high_score_for_game_description(
       let last_marble_worth = current_marble_value + removed_marble_value;
 
       players_scores[current_player_idx] = current_player_score + last_marble_worth;
-
-      if last_marble_worth >= last_marble_score {
-        has_reached_score = true;
-      };
     } else {
       let next_marble_idx = match total_placed_marbles - current_marble_idx {
         1 => 1,
@@ -148,21 +149,71 @@ fn get_high_score_for_game_description(
       current_marble_idx = next_marble_idx;
     }
 
-    if current_marble_value < 35 {
-      first_marbles_combinations.push((current_player_idx + 1, marbles.clone()));
-    } else if has_reached_score {
+    if current_marble_value % 100000 == 0 {
+      println!("current_marble_value {}", current_marble_value);
+    }
+
+    if current_marble_value >= last_marble_score {
       break;
     }
   }
 
-  (
-    *players_scores.iter().max().unwrap(),
-    first_marbles_combinations,
-  )
+  *players_scores.iter().max().unwrap()
+}
+
+// clockwise: positions > 0, counter-clockwise: positions < 0
+fn rotate_ring_start_index<T>(ring: &mut VecDeque<T>, positions: i32) {
+  if positions > 0 {
+    for _ in 0..positions {
+      let old_first = ring.pop_front().unwrap();
+
+      ring.push_back(old_first);
+    }
+  } else if positions < 0 {
+    for _ in positions..0 {
+      let old_last = ring.pop_back().unwrap();
+
+      ring.push_front(old_last);
+    }
+  }
+}
+
+// Searched for an optimized version for problem 2, updated it afterwards:
+// (note in original version the first for-loop was wrong)
+// original: https://www.reddit.com/r/adventofcode/comments/a4i97s/2018_day_9_solutions/ebfp2zp
+fn calculate_high_score(game_description: GameDescription) -> Score {
+  let (players_num, marbles_num) = game_description;
+  let mut players_score = vec![0; players_num];
+  let mut ring = VecDeque::new();
+
+  ring.push_front(0);
+
+  for current_marble in 1..=marbles_num {
+    if current_marble % 23 == 0 {
+      rotate_ring_start_index(&mut ring, -7);
+
+      let player_idx = current_marble % players_num;
+      let removed_marble = ring.pop_front().unwrap();
+      let new_extra_score = current_marble + removed_marble;
+
+      players_score[player_idx] += new_extra_score;
+    } else {
+      rotate_ring_start_index(&mut ring, 2);
+
+      ring.push_front(current_marble);
+    }
+  }
+
+  *players_score.iter().max().unwrap()
 }
 
 fn main() {
+  let first_result = get_high_score_for_game_description(INPUT_TXT);
+  let second_result = calculate_high_score((INPUT_TXT.0, INPUT_TXT.1 * 100));
+
   println!("Results:");
+  println!("- (1) first high score: {}", first_result);
+  println!("- (2) second high score: {}", second_result);
 }
 
 #[cfg(test)]
@@ -171,12 +222,12 @@ mod tests {
 
   fn get_examples() -> Vec<(GameDescription, Score)> {
     vec![
-      ((9, 32), 32),
+      ((9, 25), 32),
       ((10, 1618), 8317),
-      // ((13, 7999), 146373),
-      // ((17, 1104), 2764),
-      // ((21, 6111), 54718),
-      // ((30, 5807), 37305),
+      ((13, 7999), 146373),
+      ((17, 1104), 2764),
+      ((21, 6111), 54718),
+      ((30, 5807), 37305),
     ]
   }
 
@@ -190,95 +241,18 @@ mod tests {
   #[test]
   fn test_get_high_score_for_game_description() {
     for (game_description, high_score) in get_examples() {
-      let (result, _) = get_high_score_for_game_description(game_description);
+      let result = get_high_score_for_game_description(game_description);
 
       assert_eq!(result, high_score);
     }
   }
 
   #[test]
-  fn test_first_combinations() {
-    let (_, combinations) = get_high_score_for_game_description((9, 32));
-    let expected_result: Vec<(usize, Vec<usize>)> = vec![
-      (1, vec![0, 1]),
-      (2, vec![0, 2, 1]),
-      (3, vec![0, 2, 1, 3]),
-      (4, vec![0, 4, 2, 1, 3]),
-      (5, vec![0, 4, 2, 5, 1, 3]),
-      (6, vec![0, 4, 2, 5, 1, 6, 3]),
-      (7, vec![0, 4, 2, 5, 1, 6, 3, 7]),
-      (8, vec![0, 8, 4, 2, 5, 1, 6, 3, 7]),
-      (9, vec![0, 8, 4, 9, 2, 5, 1, 6, 3, 7]),
-      (1, vec![0, 8, 4, 9, 2, 10, 5, 1, 6, 3, 7]),
-      (2, vec![0, 8, 4, 9, 2, 10, 5, 11, 1, 6, 3, 7]),
-      (3, vec![0, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 3, 7]),
-      (4, vec![0, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 7]),
-      (5, vec![0, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7]),
-      (
-        6,
-        vec![0, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15],
-      ),
-      (
-        7,
-        vec![0, 16, 8, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15],
-      ),
-      (
-        8,
-        vec![0, 16, 8, 17, 4, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15],
-      ),
-      (
-        9,
-        vec![
-          0, 16, 8, 17, 4, 18, 9, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        1,
-        vec![
-          0, 16, 8, 17, 4, 18, 9, 19, 2, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        2,
-        vec![
-          0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        3,
-        vec![
-          0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 21, 5, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        4,
-        vec![
-          0, 16, 8, 17, 4, 18, 9, 19, 2, 20, 10, 21, 5, 22, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        5,
-        vec![
-          0, 16, 8, 17, 4, 18, 19, 2, 20, 10, 21, 5, 22, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        6,
-        vec![
-          0, 16, 8, 17, 4, 18, 19, 2, 24, 20, 10, 21, 5, 22, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-      (
-        7,
-        vec![
-          0, 16, 8, 17, 4, 18, 19, 2, 24, 20, 25, 10, 21, 5, 22, 11, 1, 12, 6, 13, 3, 14, 7, 15,
-        ],
-      ),
-    ];
+  fn test_calculate_high_score() {
+    for (game_description, high_score) in get_examples() {
+      let result = calculate_high_score(game_description);
 
-    for (idx, comb) in expected_result.iter().enumerate() {
-      let result_comb = combinations.get(idx).unwrap();
-      assert_eq!(result_comb, comb);
+      assert_eq!(result, high_score);
     }
   }
 }
