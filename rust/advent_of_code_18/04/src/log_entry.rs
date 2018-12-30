@@ -205,24 +205,27 @@ mod tests {
 
   fn get_example_data() -> Vec<LogEntry> {
     vec![
-      LogEntry::parse_string(&"[1518-11-01 00:00] Guard #10 begins shift".to_string()),
-      LogEntry::parse_string(&"[1518-11-01 00:05] falls asleep".to_string()),
-      LogEntry::parse_string(&"[1518-11-01 00:25] wakes up".to_string()),
-      LogEntry::parse_string(&"[1518-11-01 00:30] falls asleep".to_string()),
-      LogEntry::parse_string(&"[1518-11-01 00:55] wakes up".to_string()),
-      LogEntry::parse_string(&"[1518-11-01 23:08] Guard #99 begins shift".to_string()),
-      LogEntry::parse_string(&"[1518-11-02 00:40] falls asleep".to_string()),
-      LogEntry::parse_string(&"[1518-11-02 00:50] wakes up".to_string()),
-      LogEntry::parse_string(&"[1518-11-03 00:05] Guard #10 begins shift".to_string()),
-      LogEntry::parse_string(&"[1518-11-03 00:24] falls asleep".to_string()),
-      LogEntry::parse_string(&"[1518-11-03 00:29] wakes up".to_string()),
-      LogEntry::parse_string(&"[1518-11-04 00:02] Guard #99 begins shift".to_string()),
-      LogEntry::parse_string(&"[1518-11-04 00:36] falls asleep".to_string()),
-      LogEntry::parse_string(&"[1518-11-04 00:46] wakes up".to_string()),
-      LogEntry::parse_string(&"[1518-11-05 00:03] Guard #99 begins shift".to_string()),
-      LogEntry::parse_string(&"[1518-11-05 00:45] falls asleep".to_string()),
-      LogEntry::parse_string(&"[1518-11-05 00:55] wakes up".to_string()),
+      "[1518-11-01 00:00] Guard #10 begins shift",
+      "[1518-11-01 00:05] falls asleep",
+      "[1518-11-01 00:25] wakes up",
+      "[1518-11-01 00:30] falls asleep",
+      "[1518-11-01 00:55] wakes up",
+      "[1518-11-01 23:08] Guard #99 begins shift",
+      "[1518-11-02 00:40] falls asleep",
+      "[1518-11-02 00:50] wakes up",
+      "[1518-11-03 00:05] Guard #10 begins shift",
+      "[1518-11-03 00:24] falls asleep",
+      "[1518-11-03 00:29] wakes up",
+      "[1518-11-04 00:02] Guard #99 begins shift",
+      "[1518-11-04 00:36] falls asleep",
+      "[1518-11-04 00:46] wakes up",
+      "[1518-11-05 00:03] Guard #99 begins shift",
+      "[1518-11-05 00:45] falls asleep",
+      "[1518-11-05 00:55] wakes up",
     ]
+    .iter()
+    .map(|x| LogEntry::parse_string(&x.to_string()))
+    .collect()
   }
 
   #[test]
