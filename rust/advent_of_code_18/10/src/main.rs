@@ -317,7 +317,16 @@ impl Point {
     let path = Path::new("result.txt");
 
     let mut file = File::create(&path).unwrap();
-    file.write_all(contents.iter().map(|x| String::from_iter(x)).collect::<Vec<String>>().join("\n").as_bytes()).unwrap();
+    file
+      .write_all(
+        contents
+          .iter()
+          .map(|x| String::from_iter(x))
+          .collect::<Vec<String>>()
+          .join("\n")
+          .as_bytes(),
+      )
+      .unwrap();
   }
 }
 
