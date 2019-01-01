@@ -164,23 +164,32 @@ What message will eventually appear in the sky?
 use regex::Regex;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
 
-type LengthUnit = i32;
-type SpeedUnit = i32;
+type LengthUnit = f64;
+type SpeedUnit = f64;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Coord {
   x: LengthUnit,
   y: LengthUnit,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
+struct Boundary {
+  max_x: LengthUnit,
+  min_x: LengthUnit,
+  max_y: LengthUnit,
+  min_y: LengthUnit,
+}
+
+#[derive(Debug, Clone)]
 struct Velocity {
   x: SpeedUnit,
   y: SpeedUnit,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Point {
   position: Coord,
   velocity: Velocity,
@@ -208,6 +217,108 @@ impl Point {
 
     points
   }
+
+  fn calculate_second_of_min_boundary(
+    points: &mut Vec<Point>,
+    seconds_beginning: usize,
+    seconds_end: usize,
+  ) -> usize {
+    let points = points.clone();
+    let mut min_boundary_dimensions: Option<LengthUnit> = None;
+    let mut chosen_second = 0;
+    let mut points = points;
+
+    points.iter_mut().for_each(|point| {
+      point.move_time_n_seconds_for_point(seconds_beginning);
+    });
+
+    for second in seconds_beginning..seconds_end {
+      let mut boundary = Point::calculate_boundary_of_points(&mut points);
+      let boundary_dimensions = Point::calculate_boundary_dimensions(&mut boundary);
+
+      if min_boundary_dimensions.is_none() || boundary_dimensions < min_boundary_dimensions.unwrap()
+      {
+        min_boundary_dimensions = Some(boundary_dimensions);
+        chosen_second = second;
+      }
+
+      points.iter_mut().for_each(|point| {
+        point.move_time_n_seconds_for_point(1);
+      });
+    }
+
+    chosen_second
+  }
+
+  fn calculate_boundary_of_points(points: &mut Vec<Point>) -> Boundary {
+    let mut boundary = Boundary {
+      min_x: points[0].position.x,
+      max_x: points[0].position.x,
+      min_y: points[0].position.y,
+      max_y: points[0].position.y,
+    };
+
+    points.iter_mut().for_each(|point| {
+      if point.position.x < boundary.min_x {
+        boundary.min_x = point.position.x;
+      }
+      if point.position.x > boundary.max_x {
+        boundary.max_x = point.position.x;
+      }
+      if point.position.y < boundary.min_y {
+        boundary.min_y = point.position.y;
+      }
+      if point.position.y > boundary.max_y {
+        boundary.max_y = point.position.y;
+      }
+    });
+
+    boundary
+  }
+
+  fn calculate_boundary_dimensions(boundary: &mut Boundary) -> LengthUnit {
+    (boundary.max_x - boundary.min_x) + (boundary.max_y - boundary.min_y)
+  }
+
+  fn move_time_n_seconds_for_point(&mut self, seconds: usize) {
+    self.position.x += &self.velocity.x * (seconds as SpeedUnit);
+    self.position.y += &self.velocity.y * (seconds as SpeedUnit);
+  }
+
+  fn write_file_for_seconds(points: &mut Vec<Point>, second: usize) {
+    use std::iter::FromIterator;
+
+    let mut points = points.clone();
+
+    for point in points.iter_mut() {
+      point.move_time_n_seconds_for_point(second);
+    }
+
+    let boundary = Point::calculate_boundary_of_points(&mut points);
+    let mut contents: Vec<Vec<char>> = vec![];
+
+    for _ in 0..=(boundary.max_y as i32 - boundary.min_y as i32) {
+      let mut line = vec![];
+      for _ in 0..=(boundary.max_x as i32 - boundary.min_x as i32) {
+        line.push('_');
+      }
+      contents.push(line);
+    }
+
+    for point in points.iter_mut() {
+      let new_coord = Coord {
+        x: point.position.x - boundary.min_x,
+        y: point.position.y - boundary.min_y,
+      };
+
+      contents[new_coord.y as usize][new_coord.x as usize] = 'x';
+    }
+
+    let path = Path::new("result.txt");
+
+    let mut file = File::create(&path).unwrap();
+    file.write_all(contents.iter().map(|x| String::from_iter(x)).collect::<Vec<String>>().join("\n").as_bytes()).unwrap();
+  }
 }
 
 fn get_input_points() -> Vec<Point> {
@@ -223,11 +334,14 @@ fn get_input_points() -> Vec<Point> {
 }
 
 fn main() {
-  let input_points = get_input_points();
+  let mut input_points = get_input_points();
 
-  println!("input_points {:?}", input_points.len());
+  let second = Point::calculate_second_of_min_boundary(&mut input_points, 0, 20000);
+
+  Point::write_file_for_seconds(&mut input_points, second);
 
   println!("Results");
+  println!("- (1) wrote file with second: {}", second);
 }
 
 #[cfg(test)]
@@ -270,5 +384,13 @@ mod tests {
     ];
 
     Point::create_from_descriptions(&mut descriptions)
+  }
+
+  #[test]
+  fn test_calculate_second_of_min_boundary() {
+    let mut points = get_example_points();
+    let second = Point::calculate_second_of_min_boundary(&mut points, 0, 10);
+
+    assert_eq!(second, 3);
   }
 }
