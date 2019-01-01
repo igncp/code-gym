@@ -116,6 +116,8 @@ fn calc_power_level_for_coord(coord: &mut Coord, serial_number: Unit) -> Unit {
   hundreds_digit - 5
 }
 
+// the current solution, with `--release`, it runs in ~2s but in debug it takes a few minutes for
+// exercise 2. optimize this function by using: https://en.wikipedia.org/wiki/Summed-area_table
 fn calc_top_left_coord_of_max_power_level(
   serial_number: SerialNumber,
   square_size: Option<usize>,
@@ -143,7 +145,6 @@ fn calc_top_left_coord_of_max_power_level(
     None => (0, 300),
   };
 
-  // this is the bottle-neck of exercise 2. optimize if possible
   for y in 0..300 {
     for x in 0..300 {
       let upper_bound = min(size_upper_bound, 300 - max(y, x) + 1);
