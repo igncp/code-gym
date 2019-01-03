@@ -116,8 +116,36 @@ fn calc_power_level_for_coord(coord: &mut Coord, serial_number: Unit) -> Unit {
   hundreds_digit - 5
 }
 
-// the current solution, with `--release`, it runs in ~2s but in debug it takes a few minutes for
-// exercise 2. optimize this function by using: https://en.wikipedia.org/wiki/Summed-area_table
+// https://en.wikipedia.org/wiki/Summed-area_table
+fn get_summed_area_table(items: &mut Vec<Vec<Unit>>) -> Vec<Vec<Unit>> {
+  let mut summed_area_table: Vec<Vec<Unit>> = vec![];
+
+  for y in 0..(items.len()) {
+    let mut line = vec![];
+
+    for x in 0..items[y].len() {
+      let mut value = items[y][x];
+
+      if x > 0 {
+        value += line[x - 1];
+
+        if y > 0 {
+          value += summed_area_table[y - 1][x];
+          value -= summed_area_table[y - 1][x - 1];
+        }
+      } else if y > 0 {
+        value += summed_area_table[y - 1][x];
+      }
+
+      line.push(value);
+    }
+
+    summed_area_table.push(line);
+  }
+
+  summed_area_table
+}
+
 fn calc_top_left_coord_of_max_power_level(
   serial_number: SerialNumber,
   square_size: Option<usize>,
@@ -140,42 +168,37 @@ fn calc_top_left_coord_of_max_power_level(
     power_levels.push(line);
   }
 
+  let summed_area_table = get_summed_area_table(&mut power_levels);
+
   let (size_lower_bound, size_upper_bound) = match square_size {
     Some(v) => (v, v + 1),
-    None => (0, 300),
+    None => (1, 300),
   };
 
   for y in 0..300 {
     for x in 0..300 {
       let upper_bound = min(size_upper_bound, 300 - max(y, x) + 1);
-      let mut prev_value: Option<Unit> = None;
 
-      if size_lower_bound > upper_bound {
+      if size_lower_bound >= upper_bound {
         break;
       }
 
       for size in size_lower_bound..upper_bound {
-        let mut total_value = 0;
+        let area_x = x + size - 1;
+        let area_y = y + size - 1;
 
-        if prev_value.is_none() {
-          for y_2 in 0..size {
-            for x_2 in 0..size {
-              total_value += power_levels[y + y_2][x + x_2];
-            }
-          }
-        } else {
-          total_value = prev_value.unwrap();
+        let mut total_value = summed_area_table[area_y][area_x];
 
-          for y_2 in 0..size {
-            total_value += power_levels[y + y_2][x + size - 1];
-          }
+        if x > 0 {
+          total_value -= summed_area_table[area_y][x - 1];
 
-          for x_2 in 0..(size - 1) {
-            total_value += power_levels[y + size - 1][x + x_2];
+          if y > 0 {
+            total_value -= summed_area_table[y - 1][area_x];
+            total_value += summed_area_table[y - 1][x - 1];
           }
+        } else if y > 0 {
+          total_value -= summed_area_table[y - 1][area_x];
         }
-
-        prev_value = Some(total_value);
 
         if current_total_value < total_value {
           current_total_value = total_value;
@@ -229,7 +252,7 @@ mod tests {
 
   #[test]
   fn test_calc_power_level_for_coord() {
-    let mut examples = get_examples_data_1();
+    let examples = get_examples_data_1();
 
     for mut example in examples {
       let value = calc_power_level_for_coord(&mut example.0, example.1);
@@ -239,10 +262,10 @@ mod tests {
   }
 
   #[test]
-  fn test_calc_top_left_coord_of_max_power_level() {
-    let mut examples = get_examples_data_2();
+  fn test_calc_top_left_coord_of_max_power_level_1() {
+    let examples = get_examples_data_2();
 
-    for mut example in examples {
+    for example in examples {
       let (value, _) = calc_top_left_coord_of_max_power_level(example.0, Some(3));
 
       assert_eq!(value, example.1);
@@ -251,13 +274,38 @@ mod tests {
 
   #[test]
   fn test_calc_top_left_coord_of_max_power_level_2() {
-    let mut examples = get_examples_data_3();
+    let examples = get_examples_data_3();
 
-    for mut example in examples {
+    for example in examples {
       let (coord, size) = calc_top_left_coord_of_max_power_level(example.0, None);
 
       assert_eq!(coord, example.1);
       assert_eq!(size, example.2);
     }
+  }
+
+  #[test]
+  fn test_get_summed_area_table() {
+    let mut initial_table = vec![
+      vec![31, 2, 4, 33, 5, 36],
+      vec![12, 26, 9, 10, 29, 25],
+      vec![13, 17, 21, 22, 20, 18],
+      vec![24, 23, 15, 16, 14, 19],
+      vec![30, 8, 28, 27, 11, 7],
+      vec![1, 35, 34, 3, 32, 6],
+    ];
+    let result = get_summed_area_table(&mut initial_table);
+
+    assert_eq!(
+      result,
+      vec![
+        vec![31, 33, 37, 70, 75, 111],
+        vec![43, 71, 84, 127, 161, 222],
+        vec![56, 101, 135, 200, 254, 333],
+        vec![80, 148, 197, 278, 346, 444],
+        vec![110, 186, 263, 371, 450, 555],
+        vec![111, 222, 333, 444, 555, 666],
+      ]
+    );
   }
 }

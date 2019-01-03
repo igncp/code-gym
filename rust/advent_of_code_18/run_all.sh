@@ -5,6 +5,12 @@ set -e
 DIRS=$(find . -maxdepth 1 -mindepth 1 -type d | sort -V)
 
 while read -r DIR; do
-  printf "\n\n$(basename "$DIR")\n\n"
-  (cd "$DIR" && cargo test --quiet --release && cargo run --quiet --release)
+  NAME=$(basename "$DIR")
+  printf "\n\n$NAME\n\n"
+  (cd "$DIR" && \
+    printf "Building $NAME..." && \
+    cargo build --release --quiet && \
+    printf " Built.\n"
+    cargo test --quiet --release && \
+    cargo run --quiet --release)
 done <<< "$DIRS"
