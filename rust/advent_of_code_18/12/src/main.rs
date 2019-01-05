@@ -96,72 +96,376 @@ plant-containing pots after the 20th generation produces 325.
 
 After 20 generations, what is the sum of the numbers of all pots which contain a plant?
 
+--- Part Two ---
+
+You realize that 20 generations aren't enough. After all, these plants will need to last another
+1500 years to even reach your timeline, not to mention your future.
+
+After fifty billion (50000000000) generations, what is the sum of the numbers of all pots which
+contain a plant?
+
 */
 
-use std::boxed::Box;
 use std::collections::HashMap;
+use std::fs::File;
+use std::io::prelude::*;
 
-const OFFSET: usize = 5;
+type CombinationId = usize;
 
-#[derive(Debug, PartialEq, Eq, Hash, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum PotState {
   HasPlant,
   Empty,
 }
 
-type CombinationBranch = HashMap<PotState, Combination>;
+#[derive(Debug, Copy, Clone)]
+struct CombinationBranch {
+  has_plant: Option<CombinationId>,
+  empty: Option<CombinationId>,
+}
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, Clone)]
 enum Combination {
-  Result(PotState),
-  Branch(Box<CombinationBranch>),
+  Branch(CombinationBranch),
+  Node(PotState),
 }
 
-fn unwrap_combination_branch(c: Combination) -> CombinationBranch {
-  match c {
-    Combination::Branch(v) => *v,
-    _ => panic!("Not a Branch"),
-  }
-}
+type CombinationsMap = HashMap<CombinationId, Combination>;
+type PlantsState = Vec<bool>;
 
-fn get_result_from_combination(c: Combination) -> PotState {
-  match c {
-    Combination::Branch(v) => {
-      let content = *v;
-      let new_combination = *content.get(&PotState::HasPlant).unwrap();
+const OFFSET: usize = 1000;
+const INITIAL_STATE: &'static str = "#.####...##..#....#####.##.......##.#..###.#####.###.##.###.###.#...#...##.#.##.#...#..#.##..##.#.##";
 
-      return get_result_from_combination(new_combination);
-    }
-    Combination::Result(v) => v,
-  }
-}
-
-fn convert_state_str_to_vec(state: &str) -> Vec<bool> {
-  let mut result: Vec<bool> = state.chars().map(|x| return x == '#').collect();
+fn convert_state_str_to_vec(state: &str) -> PlantsState {
+  let mut result: PlantsState = state.chars().map(|x| return x == '#').collect();
 
   for _ in 0..OFFSET {
     result.insert(0, false);
+    result.push(false);
   }
 
   result
 }
 
-fn convert_str_to_combination_tranform(text: &str) -> Combination {
-  let cs: Vec<char> = text.chars().collect();
-  let branch: CombinationBranch = HashMap::new();
-  let combination: Combination = Combination::Branch(Box::new(branch));
-  let result = cs[9] == '#';
+fn get_id_for_combinations_map_item(
+  combinations_map: &mut CombinationsMap,
+  id: CombinationId,
+  ch: char,
+) -> Option<CombinationId> {
+  if let Some(v) = combinations_map.get(&id) {
+    if let Combination::Branch(w) = v {
+      return if ch == '#' { w.has_plant } else { w.empty };
+    }
+  }
 
-  combination
+  None
+}
+
+fn convert_strs_to_combinations_map(combinations_strs: &mut Vec<String>) -> CombinationsMap {
+  let mut combinations_map: CombinationsMap = HashMap::new();
+  let mut current_combination_id = 1;
+
+  combinations_map.insert(
+    0,
+    Combination::Branch(CombinationBranch {
+      has_plant: None,
+      empty: None,
+    }),
+  );
+
+  for combination_str in combinations_strs {
+    let mut prev_combination_id: Option<CombinationId> = None;
+
+    fn update_prev_combination(
+      combinations_map: &mut CombinationsMap,
+      prev_id_raw: CombinationId,
+      ch: char,
+      combination_id: CombinationId,
+    ) {
+      let existing_combination = combinations_map.get(&prev_id_raw).unwrap();
+
+      if let Combination::Branch(mut existing_combination_branch) = existing_combination {
+        if ch == '#' {
+          existing_combination_branch.has_plant = Some(combination_id);
+        } else {
+          existing_combination_branch.empty = Some(combination_id);
+        }
+
+        combinations_map.insert(
+          prev_id_raw,
+          Combination::Branch(existing_combination_branch),
+        );
+      }
+    }
+
+    for (idx, ch) in combination_str.chars().take(5).enumerate() {
+      let mut combination_id = current_combination_id;
+      let prev_id_raw = prev_combination_id.unwrap_or(0);
+
+      combination_id = get_id_for_combinations_map_item(&mut combinations_map, prev_id_raw, ch)
+        .unwrap_or(combination_id);
+
+      // entry does not exist yet
+      if current_combination_id == combination_id {
+        if idx != 4 {
+          combinations_map.insert(
+            current_combination_id,
+            Combination::Branch(CombinationBranch {
+              has_plant: None,
+              empty: None,
+            }),
+          );
+        }
+
+        update_prev_combination(&mut combinations_map, prev_id_raw, ch, combination_id);
+      }
+
+      prev_combination_id = Some(combination_id);
+      current_combination_id += 1;
+    }
+
+    let ch = combination_str.chars().nth(9).unwrap();
+
+    let node_content = if ch == '#' {
+      PotState::HasPlant
+    } else {
+      PotState::Empty
+    };
+
+    combinations_map.insert(
+      prev_combination_id.unwrap(),
+      Combination::Node(node_content),
+    );
+  }
+
+  combinations_map
+}
+
+fn get_result_for_combination_vec(
+  combinations_map: &mut CombinationsMap,
+  combination_vec: &mut PlantsState,
+) -> Option<PotState> {
+  let mut result: Option<PotState> = None;
+  let mut prev_id: Option<CombinationId> = None;
+
+  for item in combination_vec {
+    let combination_id = prev_id.unwrap_or(0);
+
+    if let Combination::Branch(combination_branch) = combinations_map.get(&combination_id).unwrap()
+    {
+      prev_id = if *item == true {
+        combination_branch.has_plant
+      } else {
+        combination_branch.empty
+      };
+
+      if prev_id.is_none() {
+        break;
+      }
+    }
+  }
+
+  if prev_id.is_some() {
+    if let Combination::Node(pot_state) = combinations_map.get(&prev_id.unwrap()).unwrap() {
+      result = Some(*pot_state);
+    }
+  }
+
+  result
+}
+
+fn get_input_combinations() -> Vec<String> {
+  let mut file = File::open("src/input.txt").expect("Unable to open the file");
+  let mut contents = String::new();
+  file
+    .read_to_string(&mut contents)
+    .expect("Unable to read the file");
+
+  let descriptions: Vec<String> = contents.lines().clone().map(|x| x.to_string()).collect();
+
+  descriptions
+}
+
+fn get_new_state_after_one_generation(
+  orig_state: &mut PlantsState,
+  mut combinations_map: &mut CombinationsMap,
+) -> PlantsState {
+  let mut new_state: PlantsState = vec![];
+  let len = orig_state.len();
+
+  for idx in 0..len {
+    if idx < 2 || idx >= len - 2 {
+      new_state.push(orig_state[idx]);
+      continue;
+    }
+
+    let mut combination_vec: PlantsState = vec![
+      orig_state[idx - 2],
+      orig_state[idx - 1],
+      orig_state[idx],
+      orig_state[idx + 1],
+      orig_state[idx + 2],
+    ];
+    let new_state_item =
+      match get_result_for_combination_vec(&mut combinations_map, &mut combination_vec)
+        .unwrap_or(PotState::Empty)
+      {
+        PotState::HasPlant => true,
+        PotState::Empty => false,
+      };
+
+    new_state.push(new_state_item);
+  }
+
+  new_state
+}
+
+fn get_new_state_after_n_generations(
+  orig_state: &mut PlantsState,
+  mut combinations_map: &mut CombinationsMap,
+  n_generations: usize,
+) -> PlantsState {
+  let mut new_state: PlantsState = orig_state.clone();
+
+  for _ in 0..n_generations {
+    new_state = get_new_state_after_one_generation(&mut new_state, &mut combinations_map);
+  }
+
+  new_state
+}
+
+fn get_pots_with_plant_sum(plants_state: &mut PlantsState) -> i64 {
+  let mut sum: i64 = 0;
+
+  for (idx, state_item) in plants_state.iter().enumerate() {
+    if *state_item == true {
+      sum += idx as i64 - OFFSET as i64;
+    }
+  }
+
+  sum
+}
+
+fn get_pots_with_plant_sum_using_pattern(
+  orig_state: &mut PlantsState,
+  mut combinations_map: &mut CombinationsMap,
+  n_generations: usize,
+) -> i64 {
+  let mut sum: i64;
+  let mut new_state: PlantsState = orig_state.clone();
+
+  let mut last_idx: i64 = 100;
+
+  let mut diff_a = 0;
+  let mut diff_b = 0;
+  let mut diff_c;
+
+  // the number 100 is a random high-enough number found empirically
+  new_state =
+    get_new_state_after_n_generations(&mut new_state, &mut combinations_map, last_idx as usize);
+  sum = get_pots_with_plant_sum(&mut new_state) as i64;
+
+  for _ in 0..100 {
+    diff_c = diff_b;
+    diff_b = diff_a;
+
+    let prev_sum = sum;
+    new_state = get_new_state_after_n_generations(&mut new_state, &mut combinations_map, 1);
+    sum = get_pots_with_plant_sum(&mut new_state) as i64;
+
+    last_idx += 1;
+    diff_a = sum - prev_sum;
+
+    if diff_a != 0 && diff_a == diff_b && diff_b == diff_c {
+      break;
+    }
+  }
+
+  sum + diff_a * (n_generations as i64 - last_idx as i64)
 }
 
 fn main() {
-  println!("Results");
+  let mut input_combinations = get_input_combinations();
+  let mut combinations_map = convert_strs_to_combinations_map(&mut input_combinations);
+  let mut state_vector = convert_state_str_to_vec(INITIAL_STATE);
+
+  let mut final_state_20 =
+    get_new_state_after_n_generations(&mut state_vector, &mut combinations_map, 20);
+  let sum_20 = get_pots_with_plant_sum(&mut final_state_20);
+
+  let sum_5b =
+    get_pots_with_plant_sum_using_pattern(&mut state_vector, &mut combinations_map, 50000000000);
+
+  println!("Results:");
+  println!("- (1) sum of pots with plant for 20: {}", sum_20);
+  println!("- (2) sum of pots with plant for 5b: {}", sum_5b);
 }
 
 #[cfg(test)]
 mod tests {
   use super::*;
+
+  fn get_result_for_combination_str(
+    combinations_map: &mut CombinationsMap,
+    combination_str: String,
+  ) -> Option<PotState> {
+    let mut result: Option<PotState> = None;
+    let mut prev_id: Option<CombinationId> = None;
+
+    for ch in combination_str.chars() {
+      let combination_id = prev_id.unwrap_or(0);
+
+      match combinations_map.get(&combination_id).unwrap() {
+        Combination::Branch(combination_branch) => {
+          let field;
+          if ch == '#' {
+            field = combination_branch.has_plant;
+          } else {
+            field = combination_branch.empty;
+          }
+
+          if field.is_some() {
+            prev_id = field;
+          } else {
+            prev_id = None;
+            break;
+          }
+        }
+        _ => {}
+      }
+    }
+
+    if prev_id.is_some() {
+      if let Combination::Node(pot_state) = combinations_map.get(&prev_id.unwrap()).unwrap() {
+        result = Some(*pot_state);
+      }
+    }
+
+    result
+  }
+
+  fn get_example_combinations() -> Vec<String> {
+    vec![
+      "...## => #",
+      "..#.. => #",
+      ".#... => #",
+      ".#.#. => #",
+      ".#.## => #",
+      ".##.. => #",
+      ".#### => #",
+      "#.#.# => #",
+      "#.### => #",
+      "##.#. => #",
+      "##.## => #",
+      "###.. => #",
+      "###.# => #",
+      "####. => #",
+      "..... => .",
+    ]
+    .iter()
+    .map(|x| x.to_string())
+    .collect()
+  }
 
   #[test]
   fn test_convert_state_str_to_vec() {
@@ -172,15 +476,63 @@ mod tests {
       expected.insert(0, false);
     }
 
+    for _ in 0..OFFSET {
+      expected.push(false);
+    }
+
     assert_eq!(result, expected)
   }
 
   #[test]
-  fn test_convert_str_to_combination_tranform() {
-    let result = convert_str_to_combination_tranform("...## => #");
-    let first = unwrap_combination_branch(result);
-    let second = unwrap_combination_branch();
+  fn test_convert_strs_to_combinations_map() {
+    let mut combinations_strs = get_example_combinations();
+    let mut combinations_map = convert_strs_to_combinations_map(&mut combinations_strs);
 
-    assert_eq!(result, result);
+    assert_eq!(
+      get_result_for_combination_str(&mut combinations_map, "...##".to_string()),
+      Some(PotState::HasPlant)
+    );
+    assert_eq!(
+      get_result_for_combination_str(&mut combinations_map, "#####".to_string()),
+      None,
+    );
+    assert_eq!(
+      get_result_for_combination_str(&mut combinations_map, ".....".to_string()),
+      Some(PotState::Empty),
+    );
+  }
+
+  #[test]
+  fn test_get_new_state_after_one_generation() {
+    let mut combinations_strs = get_example_combinations();
+    let mut combinations_map = convert_strs_to_combinations_map(&mut combinations_strs);
+    let mut orig_state = convert_state_str_to_vec("#..#.#..##......###...###");
+    let expected_final_state = convert_state_str_to_vec("#...#....#.....#..#..#..#");
+    let new_state = get_new_state_after_one_generation(&mut orig_state, &mut combinations_map);
+
+    assert_eq!(new_state, expected_final_state);
+  }
+
+  #[test]
+  fn test_get_new_state_after_n_generations() {
+    let mut combinations_strs = get_example_combinations();
+    let mut combinations_map = convert_strs_to_combinations_map(&mut combinations_strs);
+    let mut orig_state = convert_state_str_to_vec("...#..#.#..##......###...###...........");
+    let expected_final_state = convert_state_str_to_vec(".#....##....#####...#######....#.#..##.");
+    let new_state = get_new_state_after_n_generations(&mut orig_state, &mut combinations_map, 20);
+
+    assert_eq!(new_state, expected_final_state);
+  }
+
+  #[test]
+  fn test_get_pots_with_plant_sum() {
+    let mut combinations_strs = get_example_combinations();
+    let mut combinations_map = convert_strs_to_combinations_map(&mut combinations_strs);
+    let mut orig_state = convert_state_str_to_vec("#..#.#..##......###...###");
+    let mut new_state =
+      get_new_state_after_n_generations(&mut orig_state, &mut combinations_map, 20);
+    let sum = get_pots_with_plant_sum(&mut new_state);
+
+    assert_eq!(sum, 325);
   }
 }

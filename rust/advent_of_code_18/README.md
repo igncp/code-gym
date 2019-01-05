@@ -15,3 +15,20 @@ https://adventofcode.com/2018
 - [09](./09/src/main.rs)
 - [10](./10/src/main.rs)
 - [11](./11/src/main.rs)
+- [12](./12/src/main.rs)
+- [13](./13/src/main.rs)
+
+## Run
+
+You can run [the following script](./run_all.sh).
+
+```
+sh run_all.sh
+```
+
+It will take a while to build the first time as it will build the optimized
+version. The next times you run the script it should be very fast.
+
+Requirements:
+
+- Rust. Recommended install with `rustup`: https://rustup.rs
