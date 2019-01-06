@@ -14,10 +14,15 @@ pub struct Game {
 }
 
 impl Game {
-  pub fn new(text: String) -> Self {
+  pub fn new(text: String, elves_atack_power: Option<usize>) -> Self {
+    let elves_atack_power = elves_atack_power.unwrap_or(3);
     let chars_vecs: Vec<Vec<char>> = text.lines().map(|x| x.chars().collect()).collect();
     let map = Map::new(&chars_vecs);
-    let (goblins, elves) = Unit::get_units(&chars_vecs);
+    let (goblins, mut elves) = Unit::get_units(&chars_vecs);
+
+    for elve in elves.iter_mut() {
+      elve.attack_power = elves_atack_power;
+    }
 
     let mut game = Game {
       map: map,
@@ -139,17 +144,17 @@ impl Game {
     self.set_obstacles();
   }
 
-  fn damage_unit(&mut self, unit_id: usize, hit_points: usize) {
+  fn damage_unit(&mut self, unit_id: usize, attack_power: usize) {
     let all_units = self.get_all_units_cloned();
 
-    fn update_list(list: &mut Vec<Unit>, unit_id: usize, hit_points: usize) {
+    fn update_list(list: &mut Vec<Unit>, unit_id: usize, attack_power: usize) {
       let mut should_remove_item = false;
       let mut item_idx = 0;
 
       for (idx, mut item) in list.iter_mut().enumerate() {
         if item.id == unit_id {
-          if item.hit_points > hit_points {
-            item.hit_points -= hit_points;
+          if item.hit_points > attack_power {
+            item.hit_points -= attack_power;
           } else {
             should_remove_item = true;
             item_idx = idx;
@@ -167,8 +172,8 @@ impl Game {
     for item in all_units {
       if item.id == unit_id {
         match item.unit_type {
-          UnitType::Goblin => update_list(&mut self.goblins, unit_id, hit_points),
-          UnitType::Elf => update_list(&mut self.elves, unit_id, hit_points),
+          UnitType::Goblin => update_list(&mut self.goblins, unit_id, attack_power),
+          UnitType::Elf => update_list(&mut self.elves, unit_id, attack_power),
         };
 
         break;
@@ -236,7 +241,7 @@ impl Game {
       return;
     }
 
-    self.damage_unit(enemy_to_attack_id.unwrap(), 3);
+    self.damage_unit(enemy_to_attack_id.unwrap(), unit.attack_power);
   }
 
   fn run_round(&mut self) {
@@ -257,7 +262,7 @@ impl Game {
     }
   }
 
-  pub fn run(&mut self) -> (usize, usize) {
+  pub fn run(&mut self) -> (usize, usize, bool) {
     let mut round_number = 0;
     let hit_points_result;
 
@@ -265,12 +270,15 @@ impl Game {
       list.iter().fold(0, |sum, unit| sum + unit.hit_points)
     }
 
+    let mut did_elves_win = false;
+
     loop {
       self.run_round();
 
       if self.has_finished == true {
         if self.goblins.len() == 0 {
           hit_points_result = get_hit_points_result(&self.elves);
+          did_elves_win = true;
           break;
         }
 
@@ -283,7 +291,7 @@ impl Game {
       round_number += 1;
     }
 
-    (round_number, hit_points_result)
+    (round_number, hit_points_result, did_elves_win)
   }
 }
 
@@ -407,7 +415,7 @@ mod tests {
   #[test]
   fn test_game_new() {
     let text = get_example_data_1();
-    let mut game = Game::new(text);
+    let mut game = Game::new(text, None);
 
     assert_eq!(game.rounds, 0);
     assert_eq!(game.goblins.iter().count(), 3);
@@ -426,7 +434,7 @@ mod tests {
       (get_example_data_3(), Coord { x: 3, y: 1 }),
     ];
     for expected_result in expected_results {
-      let mut game = Game::new(expected_result.0);
+      let mut game = Game::new(expected_result.0, None);
       let mut all_units: Vec<Unit> = game.get_all_units_cloned();
       let elf = game.elves[0];
       let enemies_units = Unit::get_enemies(&elf, &all_units);
@@ -441,7 +449,7 @@ mod tests {
   #[test]
   fn test_movement_1() {
     let rounds_data = get_example_data_4();
-    let mut game = Game::new(rounds_data.get(0).unwrap().clone());
+    let mut game = Game::new(rounds_data.get(0).unwrap().clone(), None);
 
     for round in 1..rounds_data.len() {
       game.run_round();
@@ -456,9 +464,9 @@ mod tests {
   fn test_rounds() {
     let test_datas = get_example_data_5();
     for test_data in test_datas {
-      let mut game = Game::new(test_data.0);
+      let mut game = Game::new(test_data.0, None);
 
-      let (rounds_num, hit_points_sum) = game.run();
+      let (rounds_num, hit_points_sum, _) = game.run();
 
       assert_eq!(rounds_num, test_data.1);
       assert_eq!(hit_points_sum, test_data.2);

@@ -466,9 +466,9 @@ fn get_input_str() -> String {
 
 fn main() {
   let input_str = get_input_str();
-  let mut game = Game::new(input_str);
+  let mut game_1 = Game::new(input_str, None);
 
-  let (round, hit_points) = game.run();
+  let (round, hit_points, _) = game_1.run();
 
   println!("Results");
   println!(

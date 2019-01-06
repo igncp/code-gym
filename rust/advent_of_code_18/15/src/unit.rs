@@ -14,7 +14,7 @@ pub enum UnitType {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Unit {
-  attack_power: usize,
+  pub attack_power: usize,
   pub id: usize,
   pub hit_points: usize,
   pub unit_type: UnitType,
