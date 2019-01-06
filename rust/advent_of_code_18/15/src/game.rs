@@ -266,7 +266,7 @@ impl Game {
     }
   }
 
-  pub fn run(&mut self) -> (usize, usize, bool) {
+  pub fn run(&mut self) -> (usize, usize) {
     let mut round_number = 0;
     let hit_points_result;
 
@@ -274,15 +274,12 @@ impl Game {
       list.iter().fold(0, |sum, unit| sum + unit.hit_points)
     }
 
-    let mut did_elves_win = false;
-
     loop {
       self.run_round();
 
       if self.has_finished == true {
         if self.goblins.len() == 0 {
           hit_points_result = get_hit_points_result(&self.elves);
-          did_elves_win = true;
           break;
         }
 
@@ -295,7 +292,7 @@ impl Game {
       round_number += 1;
     }
 
-    (round_number, hit_points_result, did_elves_win)
+    (round_number, hit_points_result)
   }
 }
 
@@ -470,7 +467,7 @@ mod tests {
     for test_data in test_datas {
       let mut game = Game::new(test_data.0, None);
 
-      let (rounds_num, hit_points_sum, _) = game.run();
+      let (rounds_num, hit_points_sum) = game.run();
 
       assert_eq!(rounds_num, test_data.1);
       assert_eq!(hit_points_sum, test_data.2);

@@ -474,9 +474,9 @@ fn loop_till_elves_win() -> (usize, usize) {
 
     let orig_elves_num = game.get_remaining_elves_num();
 
-    let (round, hit_points, did_elves_win) = game.run();
+    let (round, hit_points) = game.run();
 
-    if did_elves_win == true && game.get_remaining_elves_num() == orig_elves_num {
+    if game.get_remaining_elves_num() == orig_elves_num {
       return (round, hit_points);
     }
 
@@ -488,7 +488,7 @@ fn main() {
   let input_str = get_input_str();
 
   let mut game_1 = Game::new(input_str, None);
-  let (round, hit_points, _) = game_1.run();
+  let (round, hit_points) = game_1.run();
 
   let (round2, hit_points2) = loop_till_elves_win();
 
