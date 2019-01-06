@@ -37,6 +37,10 @@ impl Game {
     game
   }
 
+  pub fn get_remaining_elves_num(&self) -> usize {
+    self.elves.len()
+  }
+
   fn generate_str(&self) -> String {
     let mut lines: Vec<Vec<char>> = vec![];
     let mut map_hash: HashMap<Coord, char> = HashMap::new();
