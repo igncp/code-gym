@@ -470,7 +470,7 @@ fn loop_till_elves_win() -> (usize, usize) {
   let mut attack_power = 4;
 
   loop {
-    let mut game = Game::new(input_str.clone(), Some(attack_power));
+    let mut game = Game::new(&input_str, Some(attack_power));
 
     let orig_elves_num = game.get_remaining_elves_num();
 
@@ -487,7 +487,7 @@ fn loop_till_elves_win() -> (usize, usize) {
 fn main() {
   let input_str = get_input_str();
 
-  let mut game_1 = Game::new(input_str, None);
+  let mut game_1 = Game::new(&input_str, None);
   let (round, hit_points) = game_1.run();
 
   let (round2, hit_points2) = loop_till_elves_win();

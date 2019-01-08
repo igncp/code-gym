@@ -122,7 +122,7 @@ fn get_claims() -> Vec<Claim> {
 
 type CoveredSquares = HashMap<(usize, usize), usize>;
 
-fn get_covered_squares(claims: &Vec<Claim>) -> CoveredSquares {
+fn get_covered_squares(claims: &[Claim]) -> CoveredSquares {
   let mut max_x = 0;
   let mut max_y = 0;
 
@@ -154,7 +154,7 @@ fn get_covered_squares(claims: &Vec<Claim>) -> CoveredSquares {
 }
 
 fn get_overlapping_claims_squares_count(
-  claims: &Vec<Claim>,
+  claims: &[Claim],
   covered_squares: Option<&mut CoveredSquares>,
 ) -> usize {
   let mut r: CoveredSquares = match covered_squares {
@@ -174,7 +174,7 @@ fn get_overlapping_claims_squares_count(
 }
 
 fn get_claims_without_overlap(
-  claims: &Vec<Claim>,
+  claims: &[Claim],
   covered_squares: Option<&mut CoveredSquares>,
 ) -> Vec<String> {
   let mut r: CoveredSquares = match covered_squares {

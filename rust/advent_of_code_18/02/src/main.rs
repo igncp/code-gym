@@ -94,7 +94,7 @@ fn get_ids() -> Vec<String> {
   ids
 }
 
-fn get_checksum_of_ids(ids: &Vec<String>) -> usize {
+fn get_checksum_of_ids(ids: &[String]) -> usize {
   let mut strs_with_2_letters = 0;
   let mut strs_with_3_letters = 0;
 
@@ -135,10 +135,10 @@ fn get_checksum_of_ids(ids: &Vec<String>) -> usize {
     }
   }
 
-  return strs_with_3_letters * strs_with_2_letters;
+  strs_with_3_letters * strs_with_2_letters
 }
 
-fn get_diff_chars_in_str(a: &String, b: &String) -> usize {
+fn get_diff_chars_in_str(a: &str, b: &str) -> usize {
   let mut diff_chars = 0;
 
   for (idx, a_char) in a.chars().enumerate() {
@@ -152,7 +152,7 @@ fn get_diff_chars_in_str(a: &String, b: &String) -> usize {
   diff_chars
 }
 
-fn get_ids_with_one_letter_different(ids: &Vec<String>) -> Vec<String> {
+fn get_ids_with_one_letter_different(ids: &[String]) -> Vec<String> {
   let mut new_ids = vec![];
 
   for (id_idx, id) in ids.iter().enumerate() {
@@ -167,7 +167,7 @@ fn get_ids_with_one_letter_different(ids: &Vec<String>) -> Vec<String> {
   new_ids
 }
 
-fn get_common_letters_of_str(a: &String, b: &String) -> String {
+fn get_common_letters_of_str(a: &str, b: &str) -> String {
   let mut new_str = String::new();
 
   for (idx, a_char) in a.chars().enumerate() {
@@ -190,8 +190,7 @@ fn main() {
     panic!("Unexpected ids number");
   }
 
-  let common_letters =
-    get_common_letters_of_str(matching_ids.get(0).unwrap(), matching_ids.get(1).unwrap());
+  let common_letters = get_common_letters_of_str(&matching_ids[0], &matching_ids[1]);
 
   println!("Results:");
   println!("- (1) checksum: {}", checksum);
@@ -209,7 +208,7 @@ mod tests {
     ]
     .iter()
     .map(|x| x.to_string())
-    .collect();
+    .collect::<Vec<String>>();
     let checksum = get_checksum_of_ids(&ids);
 
     assert_eq!(12, checksum);
@@ -222,7 +221,7 @@ mod tests {
     ]
     .iter()
     .map(|x| x.to_string())
-    .collect();
+    .collect::<Vec<String>>();
     let new_ids = get_ids_with_one_letter_different(&ids);
 
     assert_eq!(2, new_ids.iter().count());

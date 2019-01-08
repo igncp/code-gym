@@ -10,7 +10,7 @@ pub struct Coord {
 
 impl Coord {
   pub fn new(x: usize, y: usize) -> Self {
-    Coord { x: x, y: y }
+    Coord { x, y }
   }
 
   pub fn get_is_next_to_coord(&self, other: &Coord) -> bool {
@@ -23,11 +23,6 @@ impl Coord {
     }
 
     false
-  }
-
-  pub fn get_manhattan_distance(&self, other: &Coord) -> usize {
-    (self.x as i32 - other.x as i32).abs() as usize
-      + (self.y as i32 - other.y as i32).abs() as usize
   }
 }
 
@@ -68,7 +63,7 @@ pub struct Map {
 }
 
 impl Map {
-  pub fn new(chars_vecs: &Vec<Vec<char>>) -> Self {
+  pub fn new(chars_vecs: &[Vec<char>]) -> Self {
     let mut topology: MapTopology = HashMap::new();
     let dimensions = Dimensions {
       height: chars_vecs.iter().count(),
@@ -89,17 +84,17 @@ impl Map {
     }
 
     Self {
-      topology: topology,
-      dimensions: dimensions,
+      topology,
+      dimensions,
     }
   }
 
-  pub fn set_all_obstacles(&mut self, obstacles_coords: &Vec<Coord>) {
+  pub fn set_all_obstacles(&mut self, obstacles_coords: &[Coord]) {
     let topology_clone = self.topology.clone();
     let coords = topology_clone.keys();
 
     for topology_coord in coords {
-      let topology_val = topology_clone.get(topology_coord).clone().unwrap();
+      let topology_val = &topology_clone[topology_coord];
 
       if *topology_val == TerrainType::OtherObstacle {
         self.topology.insert(*topology_coord, TerrainType::Empty);
@@ -113,13 +108,13 @@ impl Map {
     }
   }
 
-  pub fn get_all_ranges(&self, coords: &Vec<Coord>) -> HashSet<Coord> {
+  pub fn get_all_ranges(&self, coords: &[Coord]) -> HashSet<Coord> {
     let mut ranges: HashSet<Coord> = HashSet::new();
 
     fn insert_coord_if_possible(map: &Map, ranges: &mut HashSet<Coord>, x: usize, y: usize) {
-      let coord = Coord { x: x, y: y };
+      let coord = Coord { x, y };
 
-      let range = if map.topology.get(&coord).unwrap() == &TerrainType::Empty {
+      let range = if map.topology[&coord] == TerrainType::Empty {
         Some(coord)
       } else {
         None
@@ -150,6 +145,4 @@ impl Map {
 }
 
 #[cfg(test)]
-mod tests {
-  use super::*;
-}
+mod tests {}

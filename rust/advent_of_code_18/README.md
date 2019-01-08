@@ -34,3 +34,4 @@ version. The next times you run the script it should be very fast.
 Requirements:
 
 - Rust. Recommended install with `rustup`: https://rustup.rs
+- Clippy: https://github.com/rust-lang/rust-clippy

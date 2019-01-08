@@ -4,7 +4,7 @@ use std::collections::HashSet;
 use pathfinding::directed::astar::astar_bag;
 use pathfinding::directed::dijkstra::dijkstra_all;
 
-use space::{Coord, Map, TerrainType};
+use space::{Coord, Map};
 
 #[derive(Debug, Eq, PartialEq, Clone, Copy)]
 pub enum UnitType {
@@ -22,7 +22,7 @@ pub struct Unit {
 }
 
 impl Unit {
-  pub fn get_units(chars_vecs: &Vec<Vec<char>>) -> (Vec<Unit>, Vec<Unit>) {
+  pub fn get_units(chars_vecs: &[Vec<char>]) -> (Vec<Unit>, Vec<Unit>) {
     let mut goblins: Vec<Unit> = vec![];
     let mut elves: Vec<Unit> = vec![];
 
@@ -34,7 +34,7 @@ impl Unit {
 
         if ch == &'G' || ch == &'E' {
           let mut unit = Unit {
-            coord: coord,
+            coord,
             id: unit_id_counter,
             attack_power: 3,
             hit_points: 200,
@@ -60,14 +60,14 @@ impl Unit {
     a.coord.cmp(&b.coord)
   }
 
-  pub fn get_enemies(unit: &Self, all_units: &Vec<Self>) -> Vec<Self> {
-    let mut cloned = all_units.clone();
+  pub fn get_enemies(unit: &Self, all_units: &[Self]) -> Vec<Self> {
+    let mut cloned = all_units.to_owned();
     cloned.retain(|x| x.unit_type != unit.unit_type);
     cloned
   }
 
   fn get_successors(coord: &Coord, map: &Map) -> Vec<(Coord, usize)> {
-    let coords = vec![coord.clone()];
+    let coords = vec![*coord];
     let ranges = map.get_all_ranges(&coords);
     let mut successors: Vec<(Coord, usize)> = vec![];
 
@@ -78,20 +78,10 @@ impl Unit {
     successors
   }
 
-  pub fn get_ranges_for_units(all_units: &Vec<Self>, map: &Map) -> HashSet<Coord> {
+  pub fn get_ranges_for_units(all_units: &[Self], map: &Map) -> HashSet<Coord> {
     let all_units_coords: Vec<Coord> = all_units.iter().map(|x| x.coord).collect();
 
     map.get_all_ranges(&all_units_coords)
-  }
-
-  pub fn get_is_in_range(&self, enemies: &mut Vec<Self>) -> bool {
-    for enemy in enemies {
-      if self.coord.get_is_next_to_coord(&enemy.coord) {
-        return true;
-      }
-    }
-
-    false
   }
 
   pub fn move_to_pos(&mut self, pos: &Coord) {
@@ -99,20 +89,20 @@ impl Unit {
     self.coord.y = pos.y;
   }
 
-  pub fn get_chosen_movement_pos(&self, target_units: &Vec<Unit>, map: &Map) -> Option<Coord> {
+  pub fn get_chosen_movement_pos(&self, target_units: &[Unit], map: &Map) -> Option<Coord> {
     for target_unit in target_units {
       if self.coord.get_is_next_to_coord(&target_unit.coord) {
         return None;
       }
     }
 
-    let ranges = Self::get_ranges_for_units(&target_units, &map);
+    let ranges = Self::get_ranges_for_units(target_units, &map);
     let result = dijkstra_all(&self.coord, |x| Unit::get_successors(&x, &map));
 
     let mut smallest_cost: Option<usize> = None;
     let mut chosen_ranges: Vec<Coord> = vec![];
     for key in result.clone().keys() {
-      let value = result.get(key).unwrap();
+      let value = &result[key];
 
       if ranges.contains(&key) {
         if smallest_cost.is_none() || smallest_cost.unwrap() > value.1 {
@@ -124,7 +114,7 @@ impl Unit {
       }
     }
 
-    if chosen_ranges.len() == 0 {
+    if chosen_ranges.is_empty() {
       return None;
     }
 
@@ -148,32 +138,27 @@ impl Unit {
     Some(possible_next_steps[0])
   }
 
-  pub fn get_enemy_to_attack_id(&self, enemies: &Vec<Unit>) -> Option<usize> {
+  pub fn get_enemy_to_attack_id(&self, enemies: &[Unit]) -> Option<usize> {
     let mut enemy_id: Option<usize> = None;
     let mut enemies_with_least_hp: Vec<Unit> = vec![];
     let mut lowest_found_hp: Option<usize> = None;
 
-    let mut reachable_enemies = enemies.clone();
+    let mut reachable_enemies = enemies.to_owned();
 
     reachable_enemies.retain(|x| x.coord.get_is_next_to_coord(&self.coord));
 
     for enemy in reachable_enemies {
-      if lowest_found_hp.is_none() {
+      if lowest_found_hp.is_none() || enemy.hit_points < lowest_found_hp.unwrap() {
         lowest_found_hp = Some(enemy.hit_points);
         enemies_with_least_hp = vec![enemy];
-      } else {
-        if enemy.hit_points < lowest_found_hp.unwrap() {
-          lowest_found_hp = Some(enemy.hit_points);
-          enemies_with_least_hp = vec![enemy];
-        } else if enemy.hit_points == lowest_found_hp.unwrap() {
-          enemies_with_least_hp.push(enemy);
-        }
+      } else if enemy.hit_points == lowest_found_hp.unwrap() {
+        enemies_with_least_hp.push(enemy);
       }
     }
 
     enemies_with_least_hp.sort_by(Unit::sort_by_coord);
 
-    if enemies_with_least_hp.len() > 0 {
+    if !enemies_with_least_hp.is_empty() {
       enemy_id = Some(enemies_with_least_hp[0].id);
     }
 
@@ -182,6 +167,4 @@ impl Unit {
 }
 
 #[cfg(test)]
-mod tests {
-  use super::*;
-}
+mod tests {}

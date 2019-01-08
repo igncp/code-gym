@@ -14,7 +14,7 @@ pub struct Game {
 }
 
 impl Game {
-  pub fn new(text: String, elves_atack_power: Option<usize>) -> Self {
+  pub fn new(text: &str, elves_atack_power: Option<usize>) -> Self {
     let elves_atack_power = elves_atack_power.unwrap_or(3);
     let chars_vecs: Vec<Vec<char>> = text.lines().map(|x| x.chars().collect()).collect();
     let map = Map::new(&chars_vecs);
@@ -25,11 +25,11 @@ impl Game {
     }
 
     let mut game = Game {
-      map: map,
+      map,
       has_finished: false,
       rounds: 0,
-      goblins: goblins,
-      elves: elves,
+      goblins,
+      elves,
     };
 
     game.set_obstacles();
@@ -47,8 +47,8 @@ impl Game {
 
     for y in 0..self.map.dimensions.height {
       for x in 0..self.map.dimensions.width {
-        let coord = Coord { x: x, y: y };
-        let val = self.map.topology.get(&coord).unwrap();
+        let coord = Coord { x, y };
+        let val = &self.map.topology[&coord];
         let ch = match val {
           TerrainType::Empty => '.',
           TerrainType::Wall => '#',
@@ -71,9 +71,9 @@ impl Game {
       let mut line: Vec<char> = vec![];
 
       for x in 0..self.map.dimensions.width {
-        let val = map_hash.get(&Coord { x: x, y: y }).unwrap();
+        let val = map_hash[&Coord { x, y }];
 
-        line.push(*val);
+        line.push(val);
       }
 
       lines.push(line);
@@ -81,15 +81,16 @@ impl Game {
 
     lines
       .iter()
-      .map(|x| String::from_iter(x))
+      .map(String::from_iter)
       .collect::<Vec<String>>()
       .join("\n")
   }
 
+  #[allow(dead_code)]
   fn print_game_str(&self) {
     let game_str = self.generate_str();
 
-    println!("");
+    println!();
     for line in game_str.lines() {
       println!("{}", line);
     }
@@ -187,7 +188,7 @@ impl Game {
     self.set_obstacles();
   }
 
-  fn get_maybe_unit_idx(all_units: &Vec<Unit>, unit_id: usize) -> Option<usize> {
+  fn get_maybe_unit_idx(all_units: &[Unit], unit_id: usize) -> Option<usize> {
     let mut maybe_unit_idx = None;
 
     for (idx, unit) in all_units.iter().enumerate() {
@@ -213,7 +214,7 @@ impl Game {
 
     let enemies_units = Unit::get_enemies(&unit, &all_units);
 
-    if enemies_units.len() == 0 {
+    if enemies_units.is_empty() {
       self.has_finished = true;
       return;
     }
@@ -258,7 +259,7 @@ impl Game {
     for unit_id in order_ids {
       self.perform_unit_move(unit_id);
 
-      if self.has_finished == true {
+      if self.has_finished {
         break;
       }
 
@@ -270,20 +271,20 @@ impl Game {
     let mut round_number = 0;
     let hit_points_result;
 
-    fn get_hit_points_result(list: &Vec<Unit>) -> usize {
+    fn get_hit_points_result(list: &[Unit]) -> usize {
       list.iter().fold(0, |sum, unit| sum + unit.hit_points)
     }
 
     loop {
       self.run_round();
 
-      if self.has_finished == true {
-        if self.goblins.len() == 0 {
+      if self.has_finished {
+        if self.goblins.is_empty() {
           hit_points_result = get_hit_points_result(&self.elves);
           break;
         }
 
-        if self.elves.len() == 0 {
+        if self.elves.is_empty() {
           hit_points_result = get_hit_points_result(&self.goblins);
           break;
         }
@@ -300,34 +301,31 @@ impl Game {
 mod tests {
   use super::*;
 
-  fn get_example_data_1() -> String {
+  fn get_example_data_1() -> &'static str {
     "#######
 #.G.E.#
 #E.G.E#
 #.G.E.#
 #######"
-      .to_string()
   }
 
-  fn get_example_data_2() -> String {
+  fn get_example_data_2() -> &'static str {
     "#######
 #E..G.#
 #...#.#
 #.G.#G#
 #######"
-      .to_string()
   }
 
-  fn get_example_data_3() -> String {
+  fn get_example_data_3() -> &'static str {
     "#######
 #.E...#
 #.....#
 #...G.#
 #######"
-      .to_string()
   }
 
-  fn get_example_data_4() -> Vec<String> {
+  fn get_example_data_4() -> Vec<&'static str> {
     vec![
       "#########
 #G..G..G#
@@ -337,8 +335,7 @@ mod tests {
 #.......#
 #.......#
 #G..G..G#
-#########"
-        .to_string(),
+#########",
       "#########
 #.G...G.#
 #...G...#
@@ -347,8 +344,7 @@ mod tests {
 #.......#
 #G..G..G#
 #.......#
-#########"
-        .to_string(),
+#########",
       "#########
 #..G.G..#
 #...G...#
@@ -357,8 +353,7 @@ mod tests {
 #G..G..G#
 #.......#
 #.......#
-#########"
-        .to_string(),
+#########",
       "#########
 #.......#
 #..GGG..#
@@ -367,12 +362,11 @@ mod tests {
 #......G#
 #.......#
 #.......#
-#########"
-        .to_string(),
+#########",
     ]
   }
 
-  fn get_example_data_5() -> Vec<(String, usize, usize)> {
+  fn get_example_data_5() -> Vec<(&'static str, usize, usize)> {
     vec![
       (
         "#######
@@ -381,8 +375,7 @@ mod tests {
 #.#.#G#
 #..G#E#
 #.....#
-#######"
-          .to_string(),
+#######",
         47,
         590,
       ),
@@ -393,8 +386,7 @@ mod tests {
 #G.##.#
 #...#E#
 #...E.#
-#######"
-          .to_string(),
+#######",
         37,
         982,
       ),
@@ -405,8 +397,7 @@ mod tests {
 #E.##E#
 #G..#.#
 #..E#.#
-#######"
-          .to_string(),
+#######",
         46,
         859,
       ),
@@ -416,16 +407,11 @@ mod tests {
   #[test]
   fn test_game_new() {
     let text = get_example_data_1();
-    let mut game = Game::new(text, None);
+    let game = Game::new(text, None);
 
     assert_eq!(game.rounds, 0);
     assert_eq!(game.goblins.iter().count(), 3);
     assert_eq!(game.elves.iter().count(), 4);
-    assert_eq!(game.goblins[0].get_is_in_range(&mut game.elves), false);
-
-    game.goblins[0].coord.x += 1;
-    assert_eq!(game.goblins[0].get_is_in_range(&mut game.elves), true);
-    game.goblins[0].coord.x -= 1;
   }
 
   #[test]
@@ -450,14 +436,12 @@ mod tests {
   #[test]
   fn test_movement_1() {
     let rounds_data = get_example_data_4();
-    let mut game = Game::new(rounds_data.get(0).unwrap().clone(), None);
+    let mut game = Game::new(rounds_data[0], None);
 
-    for round in 1..rounds_data.len() {
+    for round in rounds_data.iter().skip(1) {
       game.run_round();
 
-      let expected_result = rounds_data.get(round).unwrap().clone();
-
-      assert_eq!(game.generate_str(), expected_result);
+      assert_eq!(game.generate_str(), *round);
     }
   }
 

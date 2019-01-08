@@ -25,20 +25,20 @@ pub struct LogEntry {
 }
 
 impl LogEntry {
-  pub fn parse_string(full_str: &String) -> LogEntry {
+  pub fn parse_string(full_str: &str) -> LogEntry {
     let main_reg = Regex::new(r"^\[1518-(.+?)-(.+?) ([^ ]+?):(.+?)\] (.*?)$").unwrap();
     let caps = main_reg.captures(full_str).unwrap();
 
-    fn get_action(action_str: String) -> GuardAction {
-      let wake_up_reg = Regex::new(r"^wakes up$").unwrap();
-      let falls_asleep_reg = Regex::new(r"^falls asleep$").unwrap();
+    fn get_action(action_str: &str) -> GuardAction {
+      let wake_up_str = "wakes up";
+      let falls_asleep_str = "falls asleep";
       let begins_shift_reg = Regex::new(r"^Guard #(.*?) begins shift$").unwrap();
 
-      if wake_up_reg.is_match(action_str.as_str()) {
+      if wake_up_str == action_str {
         return GuardAction::WakeUp;
       }
 
-      if falls_asleep_reg.is_match(action_str.as_str()) {
+      if falls_asleep_str == action_str {
         return GuardAction::FallAsleep;
       }
 
@@ -60,7 +60,7 @@ impl LogEntry {
       day: caps.get(2).unwrap().as_str().parse::<usize>().unwrap(),
       minute: caps.get(4).unwrap().as_str().parse::<usize>().unwrap(),
       hour: caps.get(3).unwrap().as_str().parse::<usize>().unwrap(),
-      action: get_action(action),
+      action: get_action(&action),
     }
   }
 }
@@ -86,7 +86,7 @@ impl PartialOrd for LogEntry {
   }
 }
 
-pub fn build_guard_id_to_slept_minutes_map(entries: &Vec<LogEntry>) -> GuardIDToSleptMinutes {
+pub fn build_guard_id_to_slept_minutes_map(entries: &[LogEntry]) -> GuardIDToSleptMinutes {
   let mut result: GuardIDToSleptMinutes = HashMap::new();
 
   let mut current_guard_id: Option<usize> = None;
@@ -101,13 +101,10 @@ pub fn build_guard_id_to_slept_minutes_map(entries: &Vec<LogEntry>) -> GuardIDTo
 
     match entry.action {
       GuardAction::BeginShift(guard_id) => {
-        match result.get(&guard_id) {
-          None => {
-            let mut empty = HashMap::new() as MinuteToSleptMinutes;
+        if result.get(&guard_id).is_none() {
+          let mut empty = HashMap::new() as MinuteToSleptMinutes;
 
-            result.insert(guard_id, empty);
-          }
-          _ => {}
+          result.insert(guard_id, empty);
         };
 
         current_guard_id = Some(guard_id);
@@ -129,22 +126,19 @@ pub fn build_guard_id_to_slept_minutes_map(entries: &Vec<LogEntry>) -> GuardIDTo
           );
         }
 
-        match entry.hour {
-          0 => {
-            let current_minute = current_time.unwrap().1;
-            let guard_id_val = current_guard_id.unwrap();
-            let mut guard_map = result.get_mut(&guard_id_val).unwrap();
+        if let 0 = entry.hour {
+          let current_minute = current_time.unwrap().1;
+          let guard_id_val = current_guard_id.unwrap();
+          let mut guard_map = result.get_mut(&guard_id_val).unwrap();
 
-            for minute in current_minute..entry.minute {
-              let existing_minute = match guard_map.get(&minute) {
-                Some(val) => val + 1,
-                None => 1,
-              };
+          for minute in current_minute..entry.minute {
+            let existing_minute = match guard_map.get(&minute) {
+              Some(val) => val + 1,
+              None => 1,
+            };
 
-              guard_map.insert(minute, existing_minute);
-            }
+            guard_map.insert(minute, existing_minute);
           }
-          _ => {}
         }
       }
     }
@@ -168,7 +162,7 @@ pub fn get_guard_id_with_most_sleeping_minutes(map: &GuardIDToSleptMinutes) -> u
     }
   }
 
-  return current_match.0;
+  current_match.0
 }
 
 pub fn get_most_slept_minute_for_guard(map: &GuardIDToSleptMinutes, guard_id: usize) -> usize {
@@ -180,7 +174,7 @@ pub fn get_most_slept_minute_for_guard(map: &GuardIDToSleptMinutes, guard_id: us
     }
   }
 
-  return current_match.0;
+  current_match.0
 }
 
 pub fn get_guard_with_most_sleep_on_same_minute(
@@ -196,7 +190,7 @@ pub fn get_guard_with_most_sleep_on_same_minute(
     }
   }
 
-  return current_match;
+  current_match
 }
 
 #[cfg(test)]

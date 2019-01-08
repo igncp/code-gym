@@ -93,7 +93,7 @@ struct FirstFreqReachedTwice {
 }
 
 fn get_first_freq_reached_twice(
-  frequencies: Vec<i32>,
+  frequencies: &[i32],
 ) -> Result<FirstFreqReachedTwice, &'static str> {
   let mut found_frequencies: HashMap<i32, bool> = HashMap::new();
   let mut last_frequency = 0;
@@ -107,7 +107,7 @@ fn get_first_freq_reached_twice(
       if found_frequencies.contains_key(&last_frequency) {
         return Ok(FirstFreqReachedTwice {
           val: last_frequency,
-          whole_list_round: whole_list_round,
+          whole_list_round,
           last_list_idx: idx,
         });
       }
@@ -121,7 +121,7 @@ fn main() {
   let frequencies = get_frequencies();
   let final_frequency: i32 = frequencies.iter().sum();
   // same: let final_frequency = frequencies.iter().fold(0, |acc, val| acc + val);
-  let first_freq_reached_twice = get_first_freq_reached_twice(frequencies).unwrap();
+  let first_freq_reached_twice = get_first_freq_reached_twice(&frequencies).unwrap();
 
   println!("Results:");
   println!("- (1) Final frequency: {}", final_frequency);
@@ -138,7 +138,7 @@ mod tests {
   #[test]
   fn get_first_freq_reached_twice_example_1() {
     let frequencies = vec![1, -2, 3, 1, 1, -2];
-    let value = get_first_freq_reached_twice(frequencies).unwrap();
+    let value = get_first_freq_reached_twice(&frequencies).unwrap();
 
     assert_eq!(2, value.val);
     assert_eq!(0, value.whole_list_round);
@@ -148,7 +148,7 @@ mod tests {
   #[test]
   fn get_first_freq_reached_twice_example_2() {
     let frequencies = vec![-1, 1];
-    let value = get_first_freq_reached_twice(frequencies).unwrap();
+    let value = get_first_freq_reached_twice(&frequencies).unwrap();
 
     assert_eq!(0, value.val);
     assert_eq!(0, value.whole_list_round);
@@ -158,7 +158,7 @@ mod tests {
   #[test]
   fn get_first_freq_reached_twice_example_3() {
     let frequencies = vec![3, 3, 4, -2, -4];
-    let value = get_first_freq_reached_twice(frequencies).unwrap();
+    let value = get_first_freq_reached_twice(&frequencies).unwrap();
 
     assert_eq!(10, value.val);
     assert_eq!(1, value.whole_list_round);
@@ -168,7 +168,7 @@ mod tests {
   #[test]
   fn get_first_freq_reached_twice_example_4() {
     let frequencies = vec![-6, 3, 8, 5, -6];
-    let value = get_first_freq_reached_twice(frequencies).unwrap();
+    let value = get_first_freq_reached_twice(&frequencies).unwrap();
 
     assert_eq!(5, value.val);
     assert_eq!(2, value.whole_list_round);
@@ -178,7 +178,7 @@ mod tests {
   #[test]
   fn get_first_freq_reached_twice_example_5() {
     let frequencies = vec![7, 7, -2, -7, -4];
-    let value = get_first_freq_reached_twice(frequencies).unwrap();
+    let value = get_first_freq_reached_twice(&frequencies).unwrap();
 
     assert_eq!(14, value.val);
     assert_eq!(2, value.whole_list_round);
