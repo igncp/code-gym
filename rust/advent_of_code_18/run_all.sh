@@ -4,7 +4,7 @@ set -e
 
 DIRS=$(find . -maxdepth 1 -mindepth 1 -type d | sort -V)
 
-# TODO: add this line when ready
+# TODO: add this line when ready, after "Built." line
 # cargo clippy --all-targets --all-features --quiet -- -D warnings && \
 
 while read -r DIR; do

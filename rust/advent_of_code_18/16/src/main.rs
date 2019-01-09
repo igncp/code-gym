@@ -115,14 +115,24 @@ now.
 
 Ignoring the opcode numbers, how many samples in your puzzle input behave like three or more opcodes?
 
+--- Part Two ---
+
+Using the samples you collected, work out the number of each opcode and execute the test program
+(the second section of your puzzle input).
+
+What value is contained in register 0 after executing the test program?
+
 */
 
 extern crate regex;
 
 use regex::Regex;
+use std::collections::HashMap;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
 enum InstructionType {
   Addr,
   Addi,
@@ -144,6 +154,7 @@ enum InstructionType {
 
 type Register = [usize; 4];
 type Instruction = [usize; 4];
+type OpcodesMap = HashMap<usize, InstructionType>;
 
 #[derive(Clone, Copy, Debug)]
 struct InstructionSet {
@@ -182,7 +193,7 @@ const INSTRUCTION_TYPES: [(&str, InstructionType); 16] = [
 ];
 
 fn run_instruction(
-  instruction_type: &InstructionType,
+  instruction_type: InstructionType,
   instruction: &Instruction,
   register: &Register,
 ) -> Option<Register> {
@@ -225,21 +236,11 @@ fn run_instruction(
     // muli (multiply immediate) stores into register C the result of multiplying register A and value B.
     InstructionType::Muli => register_a.and_then(|reg_a| Some(reg_a * value_b)),
     // banr (bitwise AND register) stores into register C the result of the bitwise AND of register A and register B.
-    InstructionType::Banr => register_a.and(register_b).and_then(|reg_b| {
-      if register_a.unwrap() > 0 && reg_b > 0 {
-        Some(1)
-      } else {
-        Some(0)
-      }
-    }),
+    InstructionType::Banr => register_a
+      .and(register_b)
+      .and_then(|reg_b| Some(register_a.unwrap() & reg_b)),
     // bani (bitwise AND immediate) stores into register C the result of the bitwise AND of register A and value B.
-    InstructionType::Bani => register_a.and_then(|reg_a| {
-      if reg_a > 0 && value_b > 0 {
-        Some(1)
-      } else {
-        Some(0)
-      }
-    }),
+    InstructionType::Bani => register_a.and_then(|reg_a| Some(reg_a & value_b)),
     // eqir (equal immediate/register) sets register C to 1 if value A is equal to register B. Otherwise, register C is set to 0.
     InstructionType::Eqir => {
       register_b.and_then(|reg_b| if value_a == reg_b { Some(1) } else { Some(0) })
@@ -273,21 +274,11 @@ fn run_instruction(
       }
     }),
     // borr (bitwise OR register) stores into register C the result of the bitwise OR of register A and register B.
-    InstructionType::Borr => register_a.and(register_b).and_then(|reg_b| {
-      if register_a.unwrap() > 0 || reg_b > 0 {
-        Some(1)
-      } else {
-        Some(0)
-      }
-    }),
+    InstructionType::Borr => register_a
+      .and(register_b)
+      .and_then(|reg_b| Some(register_a.unwrap() | reg_b)),
     // bori (bitwise OR immediate) stores into register C the result of the bitwise OR of register A and value B.
-    InstructionType::Bori => register_a.and_then(|reg_a| {
-      if reg_a > 0 || value_b > 0 {
-        Some(1)
-      } else {
-        Some(0)
-      }
-    }),
+    InstructionType::Bori => register_a.and_then(|reg_a| Some(reg_a | value_b)),
     // seti (set immediate) stores value A into register C. (Input B is ignored.)
     InstructionType::Seti => Some(value_a),
     // setr (set register) copies the contents of register A into register C. (Input B is ignored.)
@@ -305,19 +296,19 @@ fn get_are_registers_equal(reg_1: &Register, reg_2: &Register) -> bool {
   reg_1[0] == reg_2[0] && reg_1[1] == reg_2[1] && reg_1[2] == reg_2[2] && reg_1[3] == reg_2[3]
 }
 
-fn loop_instructions_and_get_num_passing(
+fn loop_instructions_and_get_passing(
   instruction: &Instruction,
   register_in: &Register,
   register_out: &Register,
-) -> usize {
-  let mut passing_instructions = 0;
+) -> HashSet<InstructionType> {
+  let mut passing_instructions: HashSet<InstructionType> = HashSet::new();
 
   for instruction_tuple in &INSTRUCTION_TYPES {
     let (_, instruction_type) = instruction_tuple;
-    let result = run_instruction(instruction_type, instruction, register_in);
+    let result = run_instruction(*instruction_type, instruction, register_in);
 
     if result.is_some() && get_are_registers_equal(&result.unwrap(), register_out) {
-      passing_instructions += 1
+      passing_instructions.insert(*instruction_type);
     }
   }
 
@@ -328,18 +319,22 @@ fn get_instruction_sets_passing_three_or_more(instruction_sets: &[InstructionSet
   let mut total = 0;
 
   for instruction_set in instruction_sets {
-    let result = loop_instructions_and_get_num_passing(
+    let result = loop_instructions_and_get_passing(
       &instruction_set.instruction,
       &instruction_set.reg_before,
       &instruction_set.reg_after,
     );
 
-    if result >= 3 {
+    if result.len() >= 3 {
       total += 1;
     }
   }
 
   total
+}
+
+fn get_instruction_regex() -> Regex {
+  Regex::new(r"^(\d+) (\d+) (\d+) (\d+)$").unwrap()
 }
 
 fn get_input_instruction_sets() -> Vec<InstructionSet> {
@@ -351,7 +346,7 @@ fn get_input_instruction_sets() -> Vec<InstructionSet> {
 
   let before_regex = Regex::new(r"^Before: \[(.*), (.*), (.*), (.*)\]$").unwrap();
   let after_regex = Regex::new(r"^After:  \[(.*), (.*), (.*), (.*)\]$").unwrap();
-  let instruction_regex = Regex::new(r"^(\d+) (\d+) (\d+) (\d+)$").unwrap();
+  let instruction_regex = get_instruction_regex();
 
   let mut instruction_sets: Vec<InstructionSet> = vec![];
   let mut instruction_set = InstructionSet::new_default();
@@ -394,12 +389,91 @@ fn get_input_instruction_sets() -> Vec<InstructionSet> {
   instruction_sets
 }
 
+fn get_test_program_lines() -> Vec<Instruction> {
+  let mut file = File::open("src/input_2.txt").expect("Unable to open the file");
+  let mut contents = String::new();
+  file
+    .read_to_string(&mut contents)
+    .expect("Unable to read the file");
+
+  let instruction_regex = get_instruction_regex();
+
+  let mut instructions: Vec<Instruction> = vec![];
+
+  for line in contents.lines() {
+    let caps = instruction_regex.captures(line).unwrap();
+
+    let instruction: Instruction = [
+      caps.get(1).unwrap().as_str().parse::<usize>().unwrap(),
+      caps.get(2).unwrap().as_str().parse::<usize>().unwrap(),
+      caps.get(3).unwrap().as_str().parse::<usize>().unwrap(),
+      caps.get(4).unwrap().as_str().parse::<usize>().unwrap(),
+    ];
+
+    instructions.push(instruction);
+  }
+
+  instructions
+}
+
+fn find_op_codes(instruction_sets: &[InstructionSet]) -> OpcodesMap {
+  let mut opcodes: OpcodesMap = HashMap::new();
+  let mut found: HashSet<InstructionType> = HashSet::new();
+  let total = &INSTRUCTION_TYPES.len();
+
+  while found.len() < *total {
+    for instruction_set in instruction_sets {
+      let result = loop_instructions_and_get_passing(
+        &instruction_set.instruction,
+        &instruction_set.reg_before,
+        &instruction_set.reg_after,
+      );
+
+      let found_cloned = found.clone();
+      let intersection: HashSet<&InstructionType> = result.difference(&found_cloned).collect();
+
+      let instruction_num = instruction_set.instruction[0];
+
+      if intersection.len() == 1 && opcodes.get(&instruction_num).is_none() {
+        let instruction_type = **intersection.iter().nth(0).unwrap();
+
+        opcodes.insert(instruction_num, instruction_type);
+        found.insert(instruction_type);
+      }
+    }
+  }
+
+  opcodes
+}
+
+fn run_instructions(
+  register: &Register,
+  instructions: &[Instruction],
+  opcodes: &OpcodesMap,
+) -> Register {
+  let mut result_register = *register;
+
+  for instruction in instructions {
+    let instruction_type = opcodes.get(&instruction[0]).unwrap();
+    let new_register = run_instruction(*instruction_type, &instruction, &result_register);
+
+    result_register = new_register.unwrap();
+  }
+
+  result_register
+}
+
 fn main() {
   let instruction_sets = get_input_instruction_sets();
   let result_first_exercise = get_instruction_sets_passing_three_or_more(&instruction_sets);
+  let opcodes = find_op_codes(&instruction_sets);
+  let test_program_lines = get_test_program_lines();
+  let initial_register = [0, 0, 0, 0];
+  let result_register = run_instructions(&initial_register, &test_program_lines, &opcodes);
 
   println!("Results");
   println!("- (1) first exercise: {:?}", result_first_exercise);
+  println!("- (2) second exercise: {:?}", result_register[0]);
 }
 
 #[cfg(test)]
@@ -409,24 +483,24 @@ mod tests {
   #[test]
   fn test_run_instruction() {
     assert_eq!(
-      run_instruction(&InstructionType::Addr, &[0, 1, 3, 2], &[0, 1, 0, 3]),
+      run_instruction(InstructionType::Addr, &[0, 1, 3, 2], &[0, 1, 0, 3]),
       Some([0, 1, 4, 3])
     );
     assert_eq!(
-      run_instruction(&InstructionType::Addi, &[0, 1, 10, 2], &[0, 1, 0, 3]),
+      run_instruction(InstructionType::Addi, &[0, 1, 10, 2], &[0, 1, 0, 3]),
       Some([0, 1, 11, 3])
     );
     assert_eq!(
-      run_instruction(&InstructionType::Mulr, &[0, 1, 3, 2], &[0, 1, 0, 3]),
+      run_instruction(InstructionType::Mulr, &[0, 1, 3, 2], &[0, 1, 0, 3]),
       Some([0, 1, 3, 3])
     );
     assert_eq!(
-      run_instruction(&InstructionType::Muli, &[0, 1, 10, 2], &[0, 1, 0, 3]),
+      run_instruction(InstructionType::Muli, &[0, 1, 10, 2], &[0, 1, 0, 3]),
       Some([0, 1, 10, 3])
     );
     assert_eq!(
-      run_instruction(&InstructionType::Banr, &[0, 1, 3, 2], &[0, 1, 0, 3]),
-      Some([0, 1, 1, 3])
+      run_instruction(InstructionType::Banr, &[0, 1, 2, 3], &[0, 3, 3, 0]),
+      Some([0, 3, 3, 3])
     );
   }
 }

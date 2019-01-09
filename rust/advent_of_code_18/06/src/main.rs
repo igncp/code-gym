@@ -139,7 +139,7 @@ impl Boundary {
       return true;
     }
 
-    return false;
+    false
   }
 }
 
@@ -152,7 +152,7 @@ struct Coord {
 impl Coord {
   #[cfg(test)]
   fn new(x: CoordUnit, y: CoordUnit) -> Coord {
-    Coord { x: x, y: y }
+    Coord { x, y }
   }
 
   fn from_str(full_str: &str) -> Coord {
@@ -181,10 +181,10 @@ fn get_input_coords() -> Vec<Coord> {
 }
 
 fn get_coords_boundary(coords: &mut Vec<Coord>) -> Boundary {
-  let mut max_x = coords.get(0).unwrap().x;
-  let mut min_x = coords.get(0).unwrap().x;
-  let mut max_y = coords.get(0).unwrap().y;
-  let mut min_y = coords.get(0).unwrap().y;
+  let mut max_x = coords[0].x;
+  let mut min_x = coords[0].x;
+  let mut max_y = coords[0].y;
+  let mut min_y = coords[0].y;
 
   for coord in coords {
     if max_x < coord.x {
@@ -202,10 +202,10 @@ fn get_coords_boundary(coords: &mut Vec<Coord>) -> Boundary {
   }
 
   Boundary {
-    max_x: max_x,
-    min_x: min_x,
-    max_y: max_y,
-    min_y: min_y,
+    max_x,
+    min_x,
+    max_y,
+    min_y,
   }
 }
 
@@ -240,19 +240,16 @@ fn get_biggest_finite_area(coords: &mut Vec<Coord>) -> Option<usize> {
 
   for x in boundary.min_x..=boundary.max_x {
     for y in boundary.min_y..=boundary.max_y {
-      let mut point = Coord { x: x, y: y };
+      let mut point = Coord { x, y };
       let vec_idx = get_closest_vector_idx_if_one_for_point(coords, &mut point);
 
-      match vec_idx {
-        Some(v) => {
-          let counter = point_idx_to_count.entry(v).or_insert(0);
-          *counter += 1;
+      if let Some(v) = vec_idx {
+        let counter = point_idx_to_count.entry(v).or_insert(0);
+        *counter += 1;
 
-          if boundary.is_point_on_edge(&mut point) {
-            impossible_index.insert(v);
-          }
+        if boundary.is_point_on_edge(&mut point) {
+          impossible_index.insert(v);
         }
-        None => {}
       }
     }
   }
@@ -260,7 +257,7 @@ fn get_biggest_finite_area(coords: &mut Vec<Coord>) -> Option<usize> {
   let mut current_area: Option<usize> = None;
 
   for key in point_idx_to_count.keys() {
-    let val = point_idx_to_count.get(key).unwrap();
+    let val = &point_idx_to_count[key];
 
     if impossible_index.contains(key) {
       continue;
@@ -283,7 +280,7 @@ fn get_region_area_with_total_distance_smaller_than(
 
   for x in boundary.min_x..=boundary.max_x {
     for y in boundary.min_y..=boundary.max_y {
-      let point = Coord { x: x, y: y };
+      let point = Coord { x, y };
       let mut total_distance = 0;
 
       for (_, coord) in coords.iter_mut().enumerate() {

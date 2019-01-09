@@ -19,6 +19,7 @@ https://adventofcode.com/2018
 - [13](./13/src/main.rs)
 - [14](./14/src/main.rs)
 - [15](./15/src/main.rs)
+- [16](./16/src/main.rs)
 
 ## Run
 

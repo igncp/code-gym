@@ -96,12 +96,12 @@ fn react(mut polymer: Polymer) -> Polymer {
   polymer
 }
 
-fn get_shortest_polymer_length_by_removing_one_type(polymer: Polymer) -> usize {
+fn get_shortest_polymer_length_by_removing_one_type(polymer: &[char]) -> usize {
   let mut lowest = polymer.len();
 
   for letter_num in b'a'..=b'z' {
     let letter = letter_num as char;
-    let mut new_polymer = polymer.clone();
+    let mut new_polymer = polymer.to_owned();
     let letter_uppercase = letter.to_uppercase().to_string();
 
     new_polymer.retain(|&c| c.to_uppercase().to_string() != letter_uppercase);
@@ -125,7 +125,7 @@ fn do_these_two_chars_cancel(a: char, b: char) -> bool {
 fn main() {
   let start_polymer = get_input_polymer();
   let result_a = react(start_polymer.clone());
-  let result_b = get_shortest_polymer_length_by_removing_one_type(start_polymer.clone());
+  let result_b = get_shortest_polymer_length_by_removing_one_type(&start_polymer);
 
   println!("Results:");
   println!("- (1) final polymer length: {}", result_a.len());
@@ -152,8 +152,8 @@ mod tests {
 
   #[test]
   fn test_get_shortest_polymer_length_by_removing_one_type() {
-    let polymer = "dabAcCaCBAcCcaDA".chars().collect();
-    let result = get_shortest_polymer_length_by_removing_one_type(polymer);
+    let polymer: Vec<char> = "dabAcCaCBAcCcaDA".chars().collect();
+    let result = get_shortest_polymer_length_by_removing_one_type(&polymer);
 
     assert_eq!(result, 4);
   }
