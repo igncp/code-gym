@@ -94,8 +94,6 @@ What value is left in register 0 when the background process halts?
 extern crate regex;
 
 use regex::Regex;
-use std::collections::HashMap;
-use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -119,26 +117,8 @@ enum InstructionType {
   Setr,
 }
 
-type Register = [usize; 4];
-type Instruction = [usize; 4];
-type OpcodesMap = HashMap<usize, InstructionType>;
-
-#[derive(Clone, Copy, Debug)]
-struct InstructionSet {
-  reg_before: Register,
-  reg_after: Register,
-  instruction: Instruction,
-}
-
-impl InstructionSet {
-  fn new_default() -> Self {
-    InstructionSet {
-      reg_before: [0, 0, 0, 0],
-      reg_after: [0, 0, 0, 0],
-      instruction: [0, 0, 0, 0],
-    }
-  }
-}
+type Register = [usize; 6];
+type Instruction = (InstructionType, usize, usize, usize);
 
 const INSTRUCTION_TYPES: [(&str, InstructionType); 16] = [
   ("addr", InstructionType::Addr),
@@ -159,31 +139,159 @@ const INSTRUCTION_TYPES: [(&str, InstructionType); 16] = [
   ("setr", InstructionType::Setr),
 ];
 
-fn run_instruction(
-  instruction_type: InstructionType,
-  instruction: &Instruction,
-  register: &Register,
-) -> Option<Register> {
+fn get_instruction_type_from_str(text: &str) -> Option<InstructionType> {
+  for set in INSTRUCTION_TYPES.iter() {
+    if text == set.0 {
+      return Some(set.1);
+    }
+  }
+
+  return None;
+}
+
+#[derive(Debug)]
+struct HistoryItem {
+  instruction: Instruction,
+  instruction_pointer: usize,
+  reg_after: Register,
+  reg_before: Register,
+}
+
+type History = Vec<HistoryItem>;
+
+struct Program {
+  instruction_pointer: usize,
+  instructions: Vec<Instruction>,
+}
+
+impl Program {
+  fn new_from_text(text: &str) -> Self {
+    let ip_reg = Regex::new(r"^#ip (.+)$").unwrap();
+    let instruction_reg = Regex::new(r"^(.+) (.+) (.+) (.+)$").unwrap();
+    let lines: Vec<&str> = text.lines().collect();
+    let mut instructions: Vec<Instruction> = vec![];
+
+    let ip = ip_reg
+      .captures(lines[0])
+      .unwrap()
+      .get(1)
+      .unwrap()
+      .as_str()
+      .parse::<usize>()
+      .unwrap();
+
+    for line in lines.iter().skip(1) {
+      let caps = instruction_reg.captures(line).unwrap();
+      let instruction_name = caps.get(1).unwrap().as_str();
+      let instruction_type = get_instruction_type_from_str(&instruction_name).unwrap();
+      let instruction = (
+        instruction_type,
+        caps.get(2).unwrap().as_str().parse::<usize>().unwrap(),
+        caps.get(3).unwrap().as_str().parse::<usize>().unwrap(),
+        caps.get(4).unwrap().as_str().parse::<usize>().unwrap(),
+      );
+      instructions.push(instruction);
+    }
+
+    Program {
+      instruction_pointer: ip,
+      instructions,
+    }
+  }
+
+  fn run(&mut self) -> History {
+    let mut history: History = vec![];
+    let mut curr_reg = [0, 0, 0, 0, 0, 0];
+    let instructions_len = self.instructions.len();
+
+    loop {
+      let pointer_value = curr_reg[self.instruction_pointer];
+
+      if pointer_value >= instructions_len {
+        break;
+      }
+
+      let instruction = self.instructions[pointer_value];
+      let next_reg = run_instruction(&instruction, &curr_reg).unwrap();
+
+      let history_item = HistoryItem {
+        instruction: instruction,
+        instruction_pointer: self.instruction_pointer,
+        reg_before: curr_reg.clone(),
+        reg_after: next_reg.clone(),
+      };
+
+      history.push(history_item);
+
+      curr_reg = next_reg.clone();
+      curr_reg[self.instruction_pointer] = curr_reg[self.instruction_pointer] + 1;
+    }
+
+    history
+  }
+
+  fn run_optimized(&mut self) -> History {
+    let mut history: History = vec![];
+    let mut curr_reg = [1, 0, 0, 0, 0, 0];
+    let instructions_len = self.instructions.len();
+
+    let first_val = 10551267;
+
+    loop {
+      let pointer_value = curr_reg[self.instruction_pointer];
+
+      if pointer_value >= instructions_len {
+        break;
+      }
+
+      let instruction = self.instructions[pointer_value];
+
+      let next_reg = run_instruction(&instruction, &curr_reg).unwrap();
+
+      println!("next_reg {:?}", next_reg);
+      println!("instruction {:?}", instruction);
+      println!("");
+
+      let history_item = HistoryItem {
+        instruction: instruction,
+        instruction_pointer: self.instruction_pointer,
+        reg_before: curr_reg.clone(),
+        reg_after: next_reg.clone(),
+      };
+
+      history.push(history_item);
+
+      curr_reg = next_reg.clone();
+      curr_reg[self.instruction_pointer] = curr_reg[self.instruction_pointer] + 1;
+    }
+
+    history
+  }
+}
+
+fn run_instruction(instruction: &Instruction, register: &Register) -> Option<Register> {
   let mut new_reg = register.to_owned();
 
-  let value_a = instruction[1];
-  let value_b = instruction[2];
-  let value_c = instruction[3];
+  let value_a = instruction.1;
+  let value_b = instruction.2;
+  let value_c = instruction.3;
 
-  if value_c > 3 {
+  if value_c > 5 {
     return None;
   }
 
-  let register_a = if value_a > 3 {
+  let register_a = if value_a > 5 {
     None
   } else {
     Some(new_reg[value_a])
   };
-  let register_b = if value_b > 3 {
+  let register_b = if value_b > 5 {
     None
   } else {
     Some(new_reg[value_b])
   };
+
+  let instruction_type = instruction.0;
 
   let val = match instruction_type {
     // addr (add register) stores into register C the result of adding register A and register B.
@@ -259,9 +367,85 @@ fn run_instruction(
   Some(new_reg)
 }
 
+fn get_program() -> Program {
+  let mut file = File::open("src/input.txt").expect("Unable to open the file");
+  let mut contents = String::new();
+  file
+    .read_to_string(&mut contents)
+    .expect("Unable to read the file");
+
+  Program::new_from_text(&contents)
+}
+
 fn main() {
+  let mut program = get_program();
+  let history = program.run();
+  let last_item = history.last().unwrap().reg_after[0];
+
+  // For part 2 it needs to understand what the program is doing
+
+  /*
+
+  Repeated instructions:
+    (Seti, 2, 2, 5)
+    (Mulr, 3, 2, 4)
+    (Eqrr, 4, 1, 4)
+    (Addr, 4, 5, 5)
+    (Addi, 5, 1, 5)
+    (Addi, 2, 1, 2)
+    (Gtrr, 2, 1, 4)
+    (Addr, 5, 4, 5)
+
+  Register names: A,B,C,D,E,ip
+
+  Flow:
+    if B > C:
+      ip = 2;
+      E = D * C;
+      D = D == B;
+      ip = ip + E + 1;
+      C =  C + 1;
+    else:
+      ip = ip + 1;
+     */
+
   println!("Results");
+  println!("- (1) value on register 0: {}", last_item);
 }
 
 #[cfg(test)]
-mod tests {}
+mod tests {
+  use super::*;
+
+  fn get_example_data() -> Program {
+    let text = "#ip 0
+seti 5 0 1
+seti 6 0 2
+addi 0 1 0
+addr 1 2 3
+setr 1 0 0
+seti 8 0 4
+seti 9 0 5"
+      .to_string();
+
+    Program::new_from_text(&text)
+  }
+
+  #[test]
+  fn test_program_new_from_text() {
+    let program = get_example_data();
+
+    assert_eq!(program.instruction_pointer, 0);
+    assert_eq!(program.instructions[0], (InstructionType::Seti, 5, 0, 1));
+    assert_eq!(program.instructions.len(), 7);
+  }
+
+  #[test]
+  fn test_program_run() {
+    let mut program = get_example_data();
+    let history = program.run();
+
+    assert_eq!(history.len(), 5);
+    assert_eq!(history.last().unwrap().reg_after[0], 6)
+  }
+}
