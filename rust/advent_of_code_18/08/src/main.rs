@@ -143,7 +143,7 @@ fn build_tree_rec(
     node_value: 0,
     childs_num: nums[0],
     childs_ids: vec![],
-    is_root: is_root,
+    is_root,
   };
 
   if current_tree_node.childs_num == 0 {
@@ -175,7 +175,7 @@ fn build_tree_rec(
       current_tree_node.metadata_nums_sum += metadata_val;
 
       if metadata_val <= current_tree_node.childs_num {
-        let child_id = current_tree_node.childs_ids.get(metadata_val - 1).unwrap();
+        let child_id = &current_tree_node.childs_ids[metadata_val - 1];
         let child = tree.get(child_id).unwrap();
 
         current_tree_node.node_value += child.node_value;

@@ -94,6 +94,7 @@ What value is left in register 0 when the background process halts?
 extern crate regex;
 
 use regex::Regex;
+use std::collections::HashSet;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -146,7 +147,7 @@ fn get_instruction_type_from_str(text: &str) -> Option<InstructionType> {
     }
   }
 
-  return None;
+  None
 }
 
 #[derive(Debug)]
@@ -162,6 +163,18 @@ type History = Vec<HistoryItem>;
 struct Program {
   instruction_pointer: usize,
   instructions: Vec<Instruction>,
+}
+
+fn get_all_multiples(num: usize) -> HashSet<usize> {
+  let mut nums: HashSet<usize> = HashSet::new();
+
+  for x in 1..=num {
+    if num % x == 0 {
+      nums.insert(x);
+    }
+  }
+
+  nums
 }
 
 impl Program {
@@ -199,7 +212,7 @@ impl Program {
     }
   }
 
-  fn run(&mut self) -> History {
+  fn run_1(&mut self) -> History {
     let mut history: History = vec![];
     let mut curr_reg = [0, 0, 0, 0, 0, 0];
     let instructions_len = self.instructions.len();
@@ -215,27 +228,72 @@ impl Program {
       let next_reg = run_instruction(&instruction, &curr_reg).unwrap();
 
       let history_item = HistoryItem {
-        instruction: instruction,
+        instruction,
         instruction_pointer: self.instruction_pointer,
-        reg_before: curr_reg.clone(),
-        reg_after: next_reg.clone(),
+        reg_before: curr_reg,
+        reg_after: next_reg,
       };
 
       history.push(history_item);
 
-      curr_reg = next_reg.clone();
-      curr_reg[self.instruction_pointer] = curr_reg[self.instruction_pointer] + 1;
+      curr_reg = next_reg;
+      curr_reg[self.instruction_pointer] += 1;
     }
 
     history
   }
 
-  fn run_optimized(&mut self) -> History {
+  fn run_2(&mut self) -> History {
     let mut history: History = vec![];
     let mut curr_reg = [1, 0, 0, 0, 0, 0];
     let instructions_len = self.instructions.len();
 
-    let first_val = 10551267;
+    /*
+
+    REGISTERS: A, B, C, D, E, F (ip)
+
+    00 -> GOTO 17
+    01 -> D = 1
+    02 -> C = 1
+    ----- LOOP START
+    03 -> E = D * C
+    04 -> E = E == B
+    05 -> if E == B GOTO 07 else _
+    06 -> GOTO 08
+    07 -> A = D + A
+    08 -> C = B + C
+    09 -> E = C > B
+    10 -> GOTO (11 + E)
+    11 -> GOTO 03
+    ------ LOOP END
+    12 -> D = D + 1
+    13 -> E = D > B
+    14 -> if D > B GOTO 16 else GOTO 15
+    15 -> GOTO 02
+    16 -> STOP
+    17 -> B = B + 2
+    18 -> B = B * B
+    19 -> B = F * B
+    20 -> B = B * 11
+    21 -> E = E + 1
+    22 -> E = E * F
+    23 -> E = E + 9
+    24 -> B = B + 4
+    25 -> GOTO (26 + A)
+    26 -> GOTO 01
+    27 -> E = F
+    28 -> E = E * F
+    29 -> E = E + F
+    30 -> E = E * F
+    31 -> E = E * 14
+    32 -> E = E * F
+    33 -> B = B + E
+    34 -> A = 0
+    35 -> GOTO 01
+
+    */
+
+    let mut has_optimized = false;
 
     loop {
       let pointer_value = curr_reg[self.instruction_pointer];
@@ -246,23 +304,32 @@ impl Program {
 
       let instruction = self.instructions[pointer_value];
 
+      if pointer_value == 3 && !has_optimized {
+        let first_max_multiples = get_all_multiples(curr_reg[1]);
+
+        for multiple in &first_max_multiples {
+          curr_reg[0] += multiple;
+        }
+
+        curr_reg[2] = curr_reg[1];
+        curr_reg[3] = curr_reg[1];
+
+        has_optimized = true;
+      }
+
       let next_reg = run_instruction(&instruction, &curr_reg).unwrap();
 
-      println!("next_reg {:?}", next_reg);
-      println!("instruction {:?}", instruction);
-      println!("");
-
       let history_item = HistoryItem {
-        instruction: instruction,
+        instruction,
         instruction_pointer: self.instruction_pointer,
-        reg_before: curr_reg.clone(),
-        reg_after: next_reg.clone(),
+        reg_before: curr_reg,
+        reg_after: next_reg,
       };
 
       history.push(history_item);
 
-      curr_reg = next_reg.clone();
-      curr_reg[self.instruction_pointer] = curr_reg[self.instruction_pointer] + 1;
+      curr_reg = next_reg;
+      curr_reg[self.instruction_pointer] += 1;
     }
 
     history
@@ -378,39 +445,17 @@ fn get_program() -> Program {
 }
 
 fn main() {
-  let mut program = get_program();
-  let history = program.run();
-  let last_item = history.last().unwrap().reg_after[0];
+  let mut program_1 = get_program();
+  let history_1 = program_1.run_1();
+  let last_item_1 = history_1.last().unwrap().reg_after[0];
 
-  // For part 2 it needs to understand what the program is doing
+  let mut program_2 = get_program();
+  let history_2 = program_2.run_2();
+  let last_item_2 = history_2.last().unwrap().reg_after[0];
 
-  /*
-
-  Repeated instructions:
-    (Seti, 2, 2, 5)
-    (Mulr, 3, 2, 4)
-    (Eqrr, 4, 1, 4)
-    (Addr, 4, 5, 5)
-    (Addi, 5, 1, 5)
-    (Addi, 2, 1, 2)
-    (Gtrr, 2, 1, 4)
-    (Addr, 5, 4, 5)
-
-  Register names: A,B,C,D,E,ip
-
-  Flow:
-    if B > C:
-      ip = 2;
-      E = D * C;
-      D = D == B;
-      ip = ip + E + 1;
-      C =  C + 1;
-    else:
-      ip = ip + 1;
-     */
-
-  println!("Results");
-  println!("- (1) value on register 0: {}", last_item);
+  println!("Results:");
+  println!("- (1) value on register 0: {}", last_item_1);
+  println!("- (2) value on register 0: {}", last_item_2);
 }
 
 #[cfg(test)]
@@ -441,11 +486,21 @@ seti 9 0 5"
   }
 
   #[test]
-  fn test_program_run() {
+  fn test_program_run_1() {
     let mut program = get_example_data();
-    let history = program.run();
+    let history = program.run_1();
 
     assert_eq!(history.len(), 5);
     assert_eq!(history.last().unwrap().reg_after[0], 6)
+  }
+
+  #[test]
+  fn test_get_all_multiples() {
+    use std::iter::FromIterator;
+
+    assert_eq!(
+      get_all_multiples(100),
+      HashSet::from_iter(vec![1, 5, 100, 20, 2, 25, 50, 4, 10])
+    );
   }
 }

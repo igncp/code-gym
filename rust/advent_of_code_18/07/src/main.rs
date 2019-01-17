@@ -170,14 +170,14 @@ fn get_order_of_graph_instructions(graph: &mut DepsGraph) -> Vec<DepsGraphItemId
     let mut items_without_dependencies: Vec<DepsGraphItemId> = vec![];
 
     for graph_item_id in graph.keys() {
-      let graph_item = graph.get(graph_item_id).unwrap();
+      let graph_item = &graph[graph_item_id];
 
-      if graph_item.dependencies.len() == 0 && used_chars.contains(graph_item_id) == false {
+      if graph_item.dependencies.is_empty() && !used_chars.contains(graph_item_id) {
         items_without_dependencies.push(*graph_item_id);
       }
     }
 
-    if items_without_dependencies.len() == 0 {
+    if items_without_dependencies.is_empty() {
       break;
     }
 
@@ -188,7 +188,7 @@ fn get_order_of_graph_instructions(graph: &mut DepsGraph) -> Vec<DepsGraphItemId
     used_chars.insert(*chosen_char);
     result.push(*chosen_char);
 
-    let mut dependants: Vec<DepsGraphItemId>;
+    let dependants: Vec<DepsGraphItemId>;
 
     {
       let graph_item = graph.get_mut(chosen_char).unwrap();
@@ -250,7 +250,7 @@ fn get_seconds_of_execution_with_n_workers(
       if task.completed_seconds == task.total_seconds {
         tasks_to_complete.push(idx);
 
-        let mut dependants: Vec<DepsGraphItemId>;
+        let dependants: Vec<DepsGraphItemId>;
 
         {
           let graph_item = graph.get_mut(&task.c).unwrap();
@@ -279,9 +279,9 @@ fn get_seconds_of_execution_with_n_workers(
       let mut items_without_dependencies: Vec<DepsGraphItemId> = vec![];
 
       for graph_item_id in graph.keys() {
-        let graph_item = graph.get(graph_item_id).unwrap();
+        let graph_item = &graph[graph_item_id];
 
-        if graph_item.dependencies.len() == 0 && used_chars.contains(graph_item_id) == false {
+        if graph_item.dependencies.is_empty() && !used_chars.contains(graph_item_id) {
           items_without_dependencies.push(*graph_item_id);
         }
       }
@@ -289,7 +289,7 @@ fn get_seconds_of_execution_with_n_workers(
       items_without_dependencies.sort();
 
       for _ in 0..free_workers {
-        if items_without_dependencies.len() == 0 {
+        if items_without_dependencies.is_empty() {
           temporally_without_items = true;
           break;
         }
