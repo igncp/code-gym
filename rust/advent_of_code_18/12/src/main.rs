@@ -134,10 +134,10 @@ type CombinationsMap = HashMap<CombinationId, Combination>;
 type PlantsState = Vec<bool>;
 
 const OFFSET: usize = 1000;
-const INITIAL_STATE: &'static str = "#.####...##..#....#####.##.......##.#..###.#####.###.##.###.###.#...#...##.#.##.#...#..#.##..##.#.##";
+const INITIAL_STATE: &str = "#.####...##..#....#####.##.......##.#..###.#####.###.##.###.###.#...#...##.#.##.#...#..#.##..##.#.##";
 
 fn convert_state_str_to_vec(state: &str) -> PlantsState {
-  let mut result: PlantsState = state.chars().map(|x| return x == '#').collect();
+  let mut result: PlantsState = state.chars().map(|x| x == '#').collect();
 
   for _ in 0..OFFSET {
     result.insert(0, false);
@@ -253,7 +253,7 @@ fn get_result_for_combination_vec(
 
     if let Combination::Branch(combination_branch) = combinations_map.get(&combination_id).unwrap()
     {
-      prev_id = if *item == true {
+      prev_id = if *item {
         combination_branch.has_plant
       } else {
         combination_branch.empty
@@ -338,7 +338,7 @@ fn get_pots_with_plant_sum(plants_state: &mut PlantsState) -> i64 {
   let mut sum: i64 = 0;
 
   for (idx, state_item) in plants_state.iter().enumerate() {
-    if *state_item == true {
+    if *state_item {
       sum += idx as i64 - OFFSET as i64;
     }
   }
@@ -394,7 +394,7 @@ fn main() {
   let sum_20 = get_pots_with_plant_sum(&mut final_state_20);
 
   let sum_5b =
-    get_pots_with_plant_sum_using_pattern(&mut state_vector, &mut combinations_map, 50000000000);
+    get_pots_with_plant_sum_using_pattern(&mut state_vector, &mut combinations_map, 50_000_000_000);
 
   println!("Results:");
   println!("- (1) sum of pots with plant for 20: {}", sum_20);
@@ -407,7 +407,7 @@ mod tests {
 
   fn get_result_for_combination_str(
     combinations_map: &mut CombinationsMap,
-    combination_str: String,
+    combination_str: &str,
   ) -> Option<PotState> {
     let mut result: Option<PotState> = None;
     let mut prev_id: Option<CombinationId> = None;
@@ -415,23 +415,21 @@ mod tests {
     for ch in combination_str.chars() {
       let combination_id = prev_id.unwrap_or(0);
 
-      match combinations_map.get(&combination_id).unwrap() {
-        Combination::Branch(combination_branch) => {
-          let field;
-          if ch == '#' {
-            field = combination_branch.has_plant;
-          } else {
-            field = combination_branch.empty;
-          }
+      if let Combination::Branch(combination_branch) =
+        combinations_map.get(&combination_id).unwrap()
+      {
+        let field = if ch == '#' {
+          combination_branch.has_plant
+        } else {
+          combination_branch.empty
+        };
 
-          if field.is_some() {
-            prev_id = field;
-          } else {
-            prev_id = None;
-            break;
-          }
+        if field.is_some() {
+          prev_id = field;
+        } else {
+          prev_id = None;
+          break;
         }
-        _ => {}
       }
     }
 
@@ -489,15 +487,15 @@ mod tests {
     let mut combinations_map = convert_strs_to_combinations_map(&mut combinations_strs);
 
     assert_eq!(
-      get_result_for_combination_str(&mut combinations_map, "...##".to_string()),
+      get_result_for_combination_str(&mut combinations_map, "...##"),
       Some(PotState::HasPlant)
     );
     assert_eq!(
-      get_result_for_combination_str(&mut combinations_map, "#####".to_string()),
+      get_result_for_combination_str(&mut combinations_map, "#####"),
       None,
     );
     assert_eq!(
-      get_result_for_combination_str(&mut combinations_map, ".....".to_string()),
+      get_result_for_combination_str(&mut combinations_map, "....."),
       Some(PotState::Empty),
     );
   }

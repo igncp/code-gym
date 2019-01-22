@@ -106,11 +106,12 @@ fn calc_power_level_for_coord(coord: &mut Coord, serial_number: Unit) -> Unit {
   let mut power_level = rack_id * coord.y;
 
   power_level += serial_number;
-  power_level = power_level * rack_id;
+  power_level *= rack_id;
 
-  let hundreds_digit = match power_level >= 100 {
-    false => 0,
-    true => ((power_level % 1000) - (power_level % 100)) / 100,
+  let hundreds_digit = if power_level >= 100 {
+    ((power_level % 1000) - (power_level % 100)) / 100
+  } else {
+    0
   };
 
   hundreds_digit - 5
@@ -159,7 +160,7 @@ fn calc_top_left_coord_of_max_power_level(
     let mut line = vec![];
 
     for x in 0..300 {
-      let mut coord = Coord { x: x, y: y };
+      let mut coord = Coord { x, y };
       let value = calc_power_level_for_coord(&mut coord, serial_number);
 
       line.push(value);

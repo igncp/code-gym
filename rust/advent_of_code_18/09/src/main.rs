@@ -92,7 +92,7 @@ fn get_idx_to_substract(idx: usize, total: usize, to_remove: usize) -> usize {
   let mut result = idx as i32 - to_remove as i32;
 
   if result < 0 {
-    result = (total as i32) + result;
+    result += total as i32;
   }
 
   result as usize
@@ -128,12 +128,13 @@ fn get_high_score_for_game_description(game_description: GameDescription) -> Sco
 
       let removed_marble_value = marbles.remove(other_marble_to_remove_idx);
 
-      current_marble_idx = match other_marble_to_remove_idx == total_placed_marbles - 1 {
-        true => 0,
-        _ => other_marble_to_remove_idx,
+      current_marble_idx = if other_marble_to_remove_idx == total_placed_marbles - 1 {
+        0
+      } else {
+        other_marble_to_remove_idx
       };
 
-      let current_player_score = *players_scores.get(current_player_idx).unwrap();
+      let current_player_score = players_scores[current_player_idx];
       let last_marble_worth = current_marble_value + removed_marble_value;
 
       players_scores[current_player_idx] = current_player_score + last_marble_worth;
@@ -149,7 +150,7 @@ fn get_high_score_for_game_description(game_description: GameDescription) -> Sco
       current_marble_idx = next_marble_idx;
     }
 
-    if current_marble_value % 100000 == 0 {
+    if current_marble_value % 100_000 == 0 {
       println!("current_marble_value {}", current_marble_value);
     }
 
@@ -224,7 +225,7 @@ mod tests {
     vec![
       ((9, 25), 32),
       ((10, 1618), 8317),
-      ((13, 7999), 146373),
+      ((13, 7999), 146_373),
       ((17, 1104), 2764),
       ((21, 6111), 54718),
       ((30, 5807), 37305),

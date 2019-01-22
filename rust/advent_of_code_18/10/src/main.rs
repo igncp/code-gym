@@ -281,8 +281,8 @@ impl Point {
   }
 
   fn move_time_n_seconds_for_point(&mut self, seconds: usize) {
-    self.position.x += &self.velocity.x * (seconds as SpeedUnit);
-    self.position.y += &self.velocity.y * (seconds as SpeedUnit);
+    self.position.x += self.velocity.x * (seconds as SpeedUnit);
+    self.position.y += self.velocity.y * (seconds as SpeedUnit);
   }
 
   fn write_file_for_seconds(points: &mut Vec<Point>, second: usize) {
@@ -321,7 +321,7 @@ impl Point {
       .write_all(
         contents
           .iter()
-          .map(|x| String::from_iter(x))
+          .map(String::from_iter)
           .collect::<Vec<String>>()
           .join("\n")
           .as_bytes(),

@@ -82,7 +82,7 @@ How many recipes appear on the scoreboard to the left of the score sequence in y
 
 */
 
-const INPUT_RECIPES_NUM: usize = 846021;
+const INPUT_RECIPES_NUM: usize = 846_021;
 
 #[derive(Debug, Clone)]
 struct RecipesState {
@@ -117,7 +117,7 @@ fn get_score_after_n_recipes(mut recipes_state: &mut RecipesState, n_steps: usiz
     recipes_len = update_recipes_state(&mut recipes_state, recipes_len);
   }
 
-  let slice = recipes_state.recipes.get(n_steps..n_steps + 10).unwrap();
+  let slice = &recipes_state.recipes[n_steps..n_steps + 10];
   let chars: Vec<String> = slice.iter().map(|x| x.to_string()).collect();
 
   chars.join("")
@@ -147,7 +147,7 @@ fn update_recipes_state(recipes_state: &mut RecipesState, orig_recipes_len: usiz
   recipes_len
 }
 
-fn get_n_recipes_when_score(mut recipes_state: &mut RecipesState, score: String) -> usize {
+fn get_n_recipes_when_score(mut recipes_state: &mut RecipesState, score: &str) -> usize {
   let mut recipes_len = 2;
   let mut last_tracked_idx = 0;
   let digits: Vec<usize> = score
@@ -190,7 +190,7 @@ fn main() {
     get_score_after_n_recipes(&mut initial_configuration.clone(), INPUT_RECIPES_NUM);
   let second_exercise_result = get_n_recipes_when_score(
     &mut initial_configuration.clone(),
-    INPUT_RECIPES_NUM.to_string(),
+    &INPUT_RECIPES_NUM.to_string(),
   );
 
   println!("Results:");
@@ -230,7 +230,7 @@ mod tests {
     for result in results {
       let mut initial_configuration = get_initial_configuration();
       let new_string = result.1.to_string();
-      let n_recipes = get_n_recipes_when_score(&mut initial_configuration, new_string);
+      let n_recipes = get_n_recipes_when_score(&mut initial_configuration, &new_string);
 
       assert_eq!(n_recipes, result.0);
     }

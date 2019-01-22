@@ -149,15 +149,15 @@ fn build_tree_rec(
   if current_tree_node.childs_num == 0 {
     nums_used = 2 + current_tree_node.metadata_nums_len;
 
-    for idx in 2..nums_used {
-      current_tree_node.metadata_nums_sum += nums[idx];
+    for num in nums.iter().take(nums_used).skip(2) {
+      current_tree_node.metadata_nums_sum += num;
     }
 
     current_tree_node.node_value = current_tree_node.metadata_nums_sum;
   } else {
     let mut current_idx = 2;
     for _ in 0..current_tree_node.childs_num {
-      let mut nums_sub_set = nums.get(current_idx..nums_len).unwrap().to_vec();
+      let mut nums_sub_set = nums[current_idx..nums_len].to_vec();
 
       let (child_id, child_used_nums) =
         build_tree_rec(&mut nums_sub_set, &mut tree, current_id, false);
@@ -170,11 +170,10 @@ fn build_tree_rec(
 
     nums_used = current_idx + current_tree_node.metadata_nums_len;
 
-    for metadata_num_idx in current_idx..nums_used {
-      let metadata_val = nums[metadata_num_idx];
+    for metadata_val in nums.iter().take(nums_used).skip(current_idx) {
       current_tree_node.metadata_nums_sum += metadata_val;
 
-      if metadata_val <= current_tree_node.childs_num {
+      if *metadata_val <= current_tree_node.childs_num {
         let child_id = &current_tree_node.childs_ids[metadata_val - 1];
         let child = tree.get(child_id).unwrap();
 

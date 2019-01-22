@@ -305,7 +305,7 @@ type RoadsMap = HashMap<Coord, Option<RoadType>>;
 type Cars = Vec<Car>;
 type TrafficState = (RoadsMap, Cars);
 
-fn get_chars_vecs(a_str: String) -> Vec<Vec<char>> {
+fn get_chars_vecs(a_str: &str) -> Vec<Vec<char>> {
   let chars_vecs: Vec<Vec<char>> = a_str.lines().map(|x| x.chars().collect()).collect();
 
   chars_vecs
@@ -327,60 +327,57 @@ fn get_map_boundaries_from_chars_vecs(chars_vecs: &mut Vec<Vec<char>>) -> MapBou
     }
   }
 
-  MapBoundaries {
-    max_x: max_x,
-    max_y: max_y,
-  }
+  MapBoundaries { max_x, max_y }
 }
 
-fn parse_map_str(map_str: String) -> TrafficState {
+fn parse_map_str(map_str: &str) -> TrafficState {
   let mut chars_vecs = get_chars_vecs(map_str);
   let map_boundaries = get_map_boundaries_from_chars_vecs(&mut chars_vecs);
   let mut roads_map: RoadsMap = HashMap::new();
   let mut cars: Cars = vec![];
 
   for y in 0..=map_boundaries.max_y {
-    let line = chars_vecs.get(y as usize).unwrap();
+    let line = &chars_vecs[y as usize];
 
     for x in 0..=map_boundaries.max_x {
       let char_value = line.get(x as usize).unwrap_or(&' ');
 
-      let coord = Coord { x: x, y: y };
+      let coord = Coord { x, y };
 
-      let map_value = match char_value {
-        &'-' => Some(RoadType::Horizontal),
-        &'|' => Some(RoadType::Vertical),
-        &'>' => Some(RoadType::Horizontal),
-        &'<' => Some(RoadType::Horizontal),
-        &'v' => Some(RoadType::Vertical),
-        &'^' => Some(RoadType::Vertical),
-        &'+' => Some(RoadType::Intersection),
-        &'\\' => Some(RoadType::TurnTopLeft),
-        &'/' => Some(RoadType::TurnTopRight),
+      let map_value = match *char_value {
+        '-' => Some(RoadType::Horizontal),
+        '|' => Some(RoadType::Vertical),
+        '>' => Some(RoadType::Horizontal),
+        '<' => Some(RoadType::Horizontal),
+        'v' => Some(RoadType::Vertical),
+        '^' => Some(RoadType::Vertical),
+        '+' => Some(RoadType::Intersection),
+        '\\' => Some(RoadType::TurnTopLeft),
+        '/' => Some(RoadType::TurnTopRight),
         _ => None,
       };
 
       roads_map.insert(coord, map_value);
 
       let mut car = Car {
-        coord: coord,
+        coord,
         last_instersection_direction: IntersectionDirection::Right,
         direction: Direction::Right,
       };
 
       match char_value {
-        &'>' => {
+        '>' => {
           cars.push(car);
         }
-        &'<' => {
+        '<' => {
           car.direction = Direction::Left;
           cars.push(car);
         }
-        &'v' => {
+        'v' => {
           car.direction = Direction::Down;
           cars.push(car);
         }
-        &'^' => {
+        '^' => {
           car.direction = Direction::Up;
           cars.push(car);
         }
@@ -505,7 +502,7 @@ fn calculate_first_crash_coord(
       let mut should_push_car = true;
 
       if next_car_coords.contains(&next_car_coord) {
-        if should_only_be_one == false {
+        if !should_only_be_one {
           return next_car_coord;
         }
 
@@ -517,7 +514,7 @@ fn calculate_first_crash_coord(
           .unwrap();
         next_cars.remove(index_to_remove);
       } else if prev_car_coords.contains(&next_car_coord) {
-        if should_only_be_one == false {
+        if !should_only_be_one {
           return next_car_coord;
         }
 
@@ -556,7 +553,7 @@ fn get_input_str() -> String {
 
 fn main() {
   let input_str = get_input_str();
-  let (mut roads_map, mut cars) = parse_map_str(input_str);
+  let (mut roads_map, mut cars) = parse_map_str(&input_str);
   let coord = calculate_first_crash_coord(&mut roads_map, &mut cars, false);
   let coord_2 = calculate_first_crash_coord(&mut roads_map, &mut cars, true);
 
@@ -597,10 +594,10 @@ mod tests {
 01"
       .to_string();
 
-    let mut chars_vecs_1 = get_chars_vecs(map_str);
+    let mut chars_vecs_1 = get_chars_vecs(&map_str);
     let map_boundaries = get_map_boundaries_from_chars_vecs(&mut chars_vecs_1);
     let example_map_str = get_example_map_str();
-    let mut chars_vecs_2 = get_chars_vecs(example_map_str);
+    let mut chars_vecs_2 = get_chars_vecs(&example_map_str);
     let map_boundaries_2 = get_map_boundaries_from_chars_vecs(&mut chars_vecs_2);
 
     assert_eq!(map_boundaries, MapBoundaries { max_x: 4, max_y: 2 });
@@ -616,7 +613,7 @@ mod tests {
   #[test]
   fn test_parse_map_str() {
     let example_map_str = get_example_map_str();
-    let (_, cars) = parse_map_str(example_map_str);
+    let (_, cars) = parse_map_str(&example_map_str);
 
     assert_eq!(cars.iter().count(), 2);
   }
@@ -624,7 +621,7 @@ mod tests {
   #[test]
   fn test_calculate_first_crash_coord() {
     let example_map_str = get_example_map_str();
-    let (mut roads_map, mut cars) = parse_map_str(example_map_str);
+    let (mut roads_map, mut cars) = parse_map_str(&example_map_str);
     let coord = calculate_first_crash_coord(&mut roads_map, &mut cars, false);
 
     assert_eq!(coord, Coord { x: 7, y: 3 });
@@ -633,7 +630,7 @@ mod tests {
   #[test]
   fn test_second_exercise() {
     let example_map_str = get_example_2_map_str();
-    let (mut roads_map, mut cars) = parse_map_str(example_map_str);
+    let (mut roads_map, mut cars) = parse_map_str(&example_map_str);
     let coord = calculate_first_crash_coord(&mut roads_map, &mut cars, true);
 
     assert_eq!(coord, Coord { x: 6, y: 4 });
