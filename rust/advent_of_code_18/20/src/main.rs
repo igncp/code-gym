@@ -231,7 +231,7 @@ struct Map {
 }
 
 impl Map {
-  fn add_topology_terrain(&mut self, current_coord: &Coord, ch: char) -> Coord {
+  fn add_topology_terrain(&mut self, current_coord: Coord, ch: char) -> Coord {
     let coords = match ch {
       'E' => Some((
         Coord {
@@ -307,7 +307,7 @@ impl Map {
     for ch in chs {
       match ch {
         'N' | 'S' | 'E' | 'W' => {
-          current_coord = map.add_topology_terrain(&current_coord, ch);
+          current_coord = map.add_topology_terrain(current_coord, ch);
         }
         '(' => {
           paths.push(current_coord);
@@ -380,7 +380,7 @@ impl Map {
     };
   }
 
-  fn get_door_char(&self, coord: &Coord) -> char {
+  fn get_door_char(&self, coord: Coord) -> char {
     let coord_above = Coord {
       x: coord.x,
       y: coord.y - 1,
@@ -398,7 +398,7 @@ impl Map {
     let min_doors_to_count = 1000;
     let starting_coord = Coord { x: 0, y: 0 };
 
-    fn get_successors(map: &Map, coord: &Coord) -> Vec<(Coord, usize)> {
+    fn get_successors(map: &Map, coord: Coord) -> Vec<(Coord, usize)> {
       let next_rooms = map.get_rooms_next_to_coord(coord);
       let mut successors: Vec<(Coord, usize)> = vec![];
 
@@ -409,7 +409,7 @@ impl Map {
       successors
     }
 
-    let all_reachable_rooms = dijkstra_all(&starting_coord, |x| get_successors(&self, &x));
+    let all_reachable_rooms = dijkstra_all(&starting_coord, |x| get_successors(&self, *x));
 
     let mut part_1 = 0;
     let mut part_2 = 0;
@@ -429,7 +429,7 @@ impl Map {
     (part_1, part_2)
   }
 
-  fn get_rooms_next_to_coord(&self, coord: &Coord) -> HashSet<Coord> {
+  fn get_rooms_next_to_coord(&self, coord: Coord) -> HashSet<Coord> {
     let mut rooms: HashSet<Coord> = HashSet::new();
 
     let coord_above = Coord {
@@ -485,14 +485,15 @@ impl Map {
 
       for x in self.boundary.min_x..=self.boundary.max_x {
         let coord = Coord { x, y };
-        let mut ch = 'X';
-        if coord.x != 0 || coord.y != 0 {
-          ch = match self.topology.get(&coord).unwrap() {
+        let ch = if coord.x != 0 || coord.y != 0 {
+          match self.topology[&coord] {
             TerrainType::Wall => '#',
-            TerrainType::Door => self.get_door_char(&coord),
+            TerrainType::Door => self.get_door_char(coord),
             TerrainType::Room => '.',
-          };
-        }
+          }
+        } else {
+          'X'
+        };
 
         line.push(ch);
       }

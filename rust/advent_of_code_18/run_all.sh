@@ -4,9 +4,6 @@ set -e
 
 DIRS=$(find . -maxdepth 1 -mindepth 1 -type d | sort -V)
 
-# TODO: add this line when ready, after "Built." line
-# cargo clippy --all-targets --all-features --quiet -- -D warnings && \
-
 while read -r DIR; do
   NAME=$(basename "$DIR")
   printf "\n\n$NAME\n\n"
@@ -14,6 +11,7 @@ while read -r DIR; do
     printf "Building $NAME..." && \
     cargo build --release --quiet && \
     printf " Built.\n"
+    cargo clippy --all-targets --all-features --quiet -- -D warnings && \
     cargo test --quiet --release && \
     cargo run --quiet --release)
 done <<< "$DIRS"
