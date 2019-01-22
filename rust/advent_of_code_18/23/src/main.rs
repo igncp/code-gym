@@ -85,6 +85,7 @@ manhattan distance between any of those points and 0,0,0?
 extern crate regex;
 
 use regex::Regex;
+use std::collections::HashMap;
 use std::fs::File;
 use std::io::prelude::*;
 
@@ -123,11 +124,10 @@ struct NanoBot {
 impl NanoBot {
   fn new_from_str(text: &str) -> Vec<Self> {
     let mut nanobots: Vec<Self> = vec![];
-    let mut id = 0;
 
     let reg = Regex::new(r"pos=<(.+),(.+),(.+)>, r=(.+)$").unwrap();
 
-    for line in text.lines() {
+    for (id, line) in text.lines().enumerate() {
       let caps = reg.captures(line).unwrap();
       let nanobot = NanoBot {
         coord: Coord {
@@ -139,13 +139,12 @@ impl NanoBot {
         signal_radius: caps.get(4).unwrap().as_str().parse::<LengthUnit>().unwrap(),
       };
       nanobots.push(nanobot);
-      id += 1;
     }
 
     nanobots
   }
 
-  fn get_nanobots_num_in_range(nanobots: &Vec<NanoBot>) -> usize {
+  fn get_nanobots_num_in_range(nanobots: &[NanoBot]) -> usize {
     let mut strongest_nanobot = nanobots[0];
     let mut num = 0;
 
@@ -164,7 +163,7 @@ impl NanoBot {
     num
   }
 
-  fn get_boundary_of_nanobots(nanobots: &Vec<NanoBot>) -> Boundary {
+  fn get_boundary_of_nanobots(nanobots: &[NanoBot]) -> Boundary {
     let mut boundary = Boundary {
       max_x: nanobots[0].coord.x,
       max_y: nanobots[0].coord.y,
@@ -187,12 +186,168 @@ impl NanoBot {
     boundary
   }
 
-  fn get_best_min_distance(nanobots: &Vec<NanoBot>, orig_coord: &Coord) -> usize {
+  fn find_binary(
+    xs: &[LengthUnit],
+    ys: &[LengthUnit],
+    zs: &[LengthUnit],
+    forced_count: usize,
+    dist: LengthUnit,
+    nanobots: &[NanoBot],
+    offsets: &(LengthUnit, LengthUnit, LengthUnit),
+  ) -> (Option<LengthUnit>, Option<usize>) {
+    let mut at_target = vec![];
+    let orig_coord = Coord { x: 0, y: 0, z: 0 };
+
+    let min_xs = *xs.iter().min().unwrap();
+    let max_xs = *xs.iter().max().unwrap() + 1;
+    let min_ys = *ys.iter().min().unwrap();
+    let max_ys = *ys.iter().max().unwrap() + 1;
+    let min_zs = *zs.iter().min().unwrap();
+    let max_zs = *zs.iter().max().unwrap() + 1;
+
+    for x in (min_xs..=max_xs).step_by(dist as usize) {
+      for y in (min_ys..=max_ys).step_by(dist as usize) {
+        for z in (min_zs..=max_zs).step_by(dist as usize) {
+          // See how many bots are possible
+          let mut count = 0;
+          let coord = Coord { x, y, z };
+
+          for bot in nanobots {
+            if dist == 1 {
+              if bot.coord.get_distance(&coord) <= bot.signal_radius {
+                count += 1;
+              }
+            } else {
+              let mut calc = ((offsets.0 + x) - (offsets.0 + bot.coord.x)).abs();
+              calc += ((offsets.1 + y) - (offsets.1 + bot.coord.y)).abs();
+              calc += ((offsets.2 + z) - (offsets.2 + bot.coord.z)).abs();
+
+              // The minus three is to include the current box
+              // in any bots that are near it
+              if (calc / dist) - 3 <= bot.signal_radius / dist {
+                count += 1
+              }
+            }
+          }
+
+          if count >= forced_count {
+            at_target.push((coord, count, coord.get_distance(&orig_coord)))
+          }
+        }
+      }
+    }
+
+    while !at_target.is_empty() {
+      let mut best: Option<(Coord, usize, LengthUnit)> = None;
+      let mut best_i = None;
+
+      // Find the best candidate from the possible boxes
+      for (i, target) in at_target.iter().enumerate() {
+        if best_i.is_none() || target.2 < best.unwrap().2 {
+          best = Some(*target);
+          best_i = Some(i);
+        }
+      }
+
+      if dist == 1 {
+        let (_, count, distance) = best.unwrap();
+
+        // At the end, just return the best match
+        return (Some(distance), Some(count));
+      } else {
+        let best_unwrapped = best.unwrap();
+        // Search in the sub boxes, see if we find any matches
+        let new_xs = vec![best_unwrapped.0.x, best_unwrapped.0.x + dist / 2];
+        let new_ys = vec![best_unwrapped.0.y, best_unwrapped.0.y + dist / 2];
+        let new_zs = vec![best_unwrapped.0.z, best_unwrapped.0.z + dist / 2];
+
+        let (a, b) = NanoBot::find_binary(
+          &new_xs,
+          &new_ys,
+          &new_zs,
+          forced_count,
+          dist / 2,
+          &nanobots,
+          &offsets,
+        );
+        if a.is_none() {
+          // This is a false path, remove it from consideration and try any others
+          at_target.remove(best_i.unwrap());
+        } else {
+          // We found something, go ahead and let it bubble up
+          return (a, b);
+        }
+      }
+    }
+
+    // This means all of the candidates yeild false paths, so let this one
+    // be treated as a false path by our caller
+    (None, None)
+  }
+
+  // considering to use the rust bindings for z3, but opted for porting:
+  // https://www.reddit.com/r/adventofcode/comments/a8s17l/2018_day_23_solutions/ecddus1
+  fn get_best_min_distance(nanobots: &[NanoBot]) -> LengthUnit {
     let boundary = NanoBot::get_boundary_of_nanobots(&nanobots);
+    let mut dist = 1;
+    let nanobots_len = nanobots.len();
 
-    println!("boundary {:?}", boundary);
+    while dist < boundary.max_x - boundary.min_x
+      || dist < boundary.max_y - boundary.min_y
+      || dist < boundary.max_z - boundary.min_z
+    {
+      dist *= 2;
+    }
 
-    0
+    let xs: Vec<LengthUnit> = nanobots.iter().map(|n| n.coord.x).collect();
+    let xy: Vec<LengthUnit> = nanobots.iter().map(|n| n.coord.y).collect();
+    let xz: Vec<LengthUnit> = nanobots.iter().map(|n| n.coord.z).collect();
+
+    let offsets = (
+      boundary.min_x.abs(),
+      boundary.min_y.abs(),
+      boundary.min_z.abs(),
+    );
+
+    let mut span = 1;
+    while span < nanobots_len {
+      span *= 2;
+    }
+
+    let mut forced_check = 1;
+    let mut best_val: Option<LengthUnit> = None;
+    let mut best_count: Option<usize> = None;
+    let mut tried: HashMap<usize, (Option<LengthUnit>, Option<usize>)> = HashMap::new();
+
+    loop {
+      if tried.get(&forced_check).is_none() {
+        let value = NanoBot::find_binary(&xs, &xy, &xz, forced_check, dist, &nanobots, &offsets);
+        tried.insert(forced_check, value);
+      }
+      let (test_val, test_count) = &tried[&forced_check];
+
+      if test_val.is_none() {
+        if span > 1 {
+          span /= 2;
+        }
+        forced_check = std::cmp::max(1 as i32, forced_check as i32 - span as i32) as usize;
+      } else {
+        // We found something, so go forward
+        if best_count.is_none() || test_count.is_none() || test_count.unwrap() > best_count.unwrap()
+        {
+          best_val = *test_val;
+          best_count = *test_count;
+        }
+
+        if span == 1 {
+          // This means we went back one, and it was empty, so we're done!
+          break;
+        }
+        forced_check += span;
+      }
+    }
+
+    best_val.unwrap()
   }
 }
 
@@ -209,8 +364,7 @@ fn get_input_nanobots() -> Vec<NanoBot> {
 fn main() {
   let input_nanobots = get_input_nanobots();
   let num_nanobots = NanoBot::get_nanobots_num_in_range(&input_nanobots);
-  let best_min_distance =
-    NanoBot::get_best_min_distance(&input_nanobots, &Coord { x: 0, y: 0, z: 0 });
+  let best_min_distance = NanoBot::get_best_min_distance(&input_nanobots);
 
   println!("Results:");
   println!("- (1) nanobots in range: {}", num_nanobots);
@@ -262,7 +416,7 @@ pos=<10,10,10>, r=5",
   #[test]
   fn test_get_best_min_distance() {
     let nanobots = get_example_data_2();
-    let best_min_distance = NanoBot::get_best_min_distance(&nanobots, &Coord { x: 0, y: 0, z: 0 });
+    let best_min_distance = NanoBot::get_best_min_distance(&nanobots);
 
     assert_eq!(best_min_distance, 36);
   }
