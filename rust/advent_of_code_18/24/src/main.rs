@@ -95,6 +95,7 @@ Infection group 2 attacks defending group 2, killing 84 units
 Immune System group 2 attacks defending group 1, killing 4 units
 Immune System group 1 attacks defending group 2, killing 51 units
 Infection group 1 attacks defending group 1, killing 17 units
+
 Immune System:
 Group 2 contains 905 units
 Infection:
@@ -192,6 +193,289 @@ stands now, how many units would the winning army have?
 
 */
 
+extern crate regex;
+
+use regex::Regex;
+use std::cmp::Ordering;
+use std::collections::HashMap;
+use std::collections::HashSet;
+use std::fs::File;
+use std::io::prelude::*;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+enum GroupType {
+  Infection,
+  Immune,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+enum AttackType {
+  Bludgeon,
+  Radiation,
+  Slash,
+  Cold,
+  Fire,
+}
+
+type GroupId = usize;
+
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
+struct Group {
+  id: GroupId,
+  units_num: usize,
+  hit_points: usize,
+  immune_to: Vec<AttackType>,
+  weak_to: Vec<AttackType>,
+  attack_damage: usize,
+  attack_type: AttackType,
+  group_type: GroupType,
+  initiative: usize,
+}
+
+type Regs = (Regex, Regex, Regex, Regex);
+
+impl Group {
+  fn new_from_text(text: &str) -> Vec<Group> {
+    let mut group_type = GroupType::Immune;
+    let mut groups = vec![];
+    let regs = Group::get_regs();
+    let mut id = 0;
+
+    for (idx, line) in text.lines().enumerate() {
+      match line {
+        "Immune System:" => {
+          group_type = GroupType::Immune;
+        }
+        "Infection:" => {
+          group_type = GroupType::Infection;
+        }
+        "" => {}
+        _ => {
+          let group = Group::new_from_line(&line, group_type, &regs, id);
+          groups.push(group);
+          id += 1;
+        }
+      }
+    }
+
+    groups
+  }
+
+  fn get_regs() -> Regs {
+    let line_reg = Regex::new(r"^(.+) units each with (.+) hit points(.+)with an attack that does (.+) (.+) damage at initiative (.+)$").unwrap();
+    let reg_immune = Regex::new(r"immune to ([^;)]+);?").unwrap();
+    let reg_weak = Regex::new(r"weak to ([^;)]+);?").unwrap();
+    let reg_word = Regex::new(r"(\w+)").unwrap();
+
+    (line_reg, reg_immune, reg_weak, reg_word)
+  }
+
+  fn new_from_line(line: &str, group_type: GroupType, regs: &Regs, id: usize) -> Group {
+    fn parse_attack_type(word: &str) -> AttackType {
+      let result = match word {
+        "fire" => Some(AttackType::Fire),
+        "radiation" => Some(AttackType::Radiation),
+        "cold" => Some(AttackType::Cold),
+        "slashing" => Some(AttackType::Slash),
+        "bludgeoning" => Some(AttackType::Bludgeon),
+        _ => {
+          println!("Unknown attack: {}", word);
+          None
+        }
+      };
+
+      result.unwrap()
+    }
+
+    fn parse_stats(stats: &str, regs: &Regs) -> (Vec<AttackType>, Vec<AttackType>) {
+      let mut immune_to = vec![];
+      let mut weak_to = vec![];
+
+      if stats != "" {
+        let (_, reg_immune, reg_weak, reg_word) = regs;
+
+        for cap_immune in reg_immune.captures_iter(stats) {
+          for cap_immune_word in reg_word.captures_iter(&cap_immune[1]) {
+            immune_to.push(parse_attack_type(&cap_immune_word[1]));
+          }
+        }
+
+        for cap_weak in reg_weak.captures_iter(stats) {
+          for cap_weak_word in reg_word.captures_iter(&cap_weak[1]) {
+            weak_to.push(parse_attack_type(&cap_weak_word[1]));
+          }
+        }
+      }
+
+      (immune_to, weak_to)
+    }
+
+    let (line_reg, _, _, _) = regs;
+    let caps = line_reg.captures(line).unwrap();
+    let (immune_to, weak_to) = parse_stats(caps.get(3).unwrap().as_str(), regs);
+
+    let mut group = Group {
+      id,
+      units_num: caps.get(1).unwrap().as_str().parse::<usize>().unwrap(),
+      hit_points: caps.get(2).unwrap().as_str().parse::<usize>().unwrap(),
+      group_type,
+      immune_to,
+      weak_to,
+      attack_damage: caps.get(4).unwrap().as_str().parse::<usize>().unwrap(),
+      attack_type: parse_attack_type(caps.get(5).unwrap().as_str()),
+      initiative: caps.get(6).unwrap().as_str().parse::<usize>().unwrap(),
+    };
+
+    group
+  }
+
+  fn run_battle(groups: &mut Vec<Group>) {
+    fn get_fight_selections(groups: &mut Vec<Group>) -> HashMap<GroupId, Option<GroupId>> {
+      let mut fight_selections = HashMap::new();
+      let mut attacked_groups: HashSet<GroupId> = HashSet::new();
+      let mut attacking_groups = groups.clone();
+
+      attacking_groups.sort_by(|a, b| {
+        match b.get_effective_power().cmp(&a.get_effective_power()) {
+          Ordering::Equal => b.initiative.cmp(&a.initiative),
+          v => v,
+        }
+      });
+
+      for attacking_group in attacking_groups {
+        let mut max_damage = 0;
+        let mut attacked_candidates: Vec<Group> = vec![];
+
+        for defending_group in groups.clone() {
+          if defending_group.id == attacking_group.id
+            || defending_group.group_type == attacking_group.group_type
+            || attacked_groups.contains(&defending_group.id)
+          {
+            continue;
+          }
+
+          let damage = attacking_group.get_damage_to_group(&defending_group);
+
+          match damage.cmp(&max_damage) {
+            Ordering::Equal => {
+              attacked_candidates.push(defending_group.clone());
+            }
+            Ordering::Greater => {
+              max_damage = damage;
+              attacked_candidates = vec![];
+              attacked_candidates.push(defending_group.clone());
+            }
+            _ => {}
+          }
+        }
+      }
+
+      std::process::exit(1);
+
+      fight_selections
+    }
+
+    loop {
+      let fight_selections = get_fight_selections(groups);
+      // attacks phase
+    }
+  }
+
+  fn get_effective_power(&self) -> usize {
+    self.units_num * self.attack_damage
+  }
+
+  fn get_damage_to_group(&self, defending_group: &Group) -> usize {
+    if defending_group.immune_to.contains(&self.attack_type) {
+      return 0;
+    }
+
+    let effective_power = self.get_effective_power();
+
+    if defending_group.weak_to.contains(&self.attack_type) {
+      return effective_power * 2;
+    }
+
+    effective_power
+  }
+}
+
+fn get_input_groups() -> Vec<Group> {
+  let mut file = File::open("src/input.txt").expect("Unable to open the file");
+  let mut contents = String::new();
+  file
+    .read_to_string(&mut contents)
+    .expect("Unable to read the file");
+
+  Group::new_from_text(&contents)
+}
+
 fn main() {
+  let mut groups = get_input_groups();
+
+  Group::run_battle(&mut groups);
+
   println!("Results:");
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+
+  fn get_example_data() -> String {
+    "Immune System:
+17 units each with 5390 hit points (weak to radiation, bludgeoning) with an attack that does 4507 fire damage at initiative 2
+989 units each with 1274 hit points (immune to fire; weak to bludgeoning, slashing) with an attack that does 25 slashing damage at initiative 3
+
+Infection:
+801 units each with 4706 hit points (weak to radiation) with an attack that does 116 bludgeoning damage at initiative 1
+4485 units each with 2961 hit points (immune to radiation; weak to fire, cold) with an attack that does 12 slashing damage at initiative 4".to_string()
+  }
+
+  #[test]
+  fn test_new_from_line() {
+    let line_1 = "8233 units each with 2012 hit points (immune to radiation) with an attack that does 2 fire damage at initiative 5";
+    let line_2 = "115 units each with 10354 hit points (immune to fire, radiation, bludgeoning) with an attack that does 788 cold damage at initiative 2";
+
+    assert_eq!(
+      Group::new_from_line(&line_1, GroupType::Immune, &Group::get_regs(), 0),
+      Group {
+        id: 0,
+        units_num: 8233,
+        hit_points: 2012,
+        immune_to: vec![AttackType::Radiation],
+        weak_to: vec![],
+        group_type: GroupType::Immune,
+        attack_damage: 2,
+        attack_type: AttackType::Fire,
+        initiative: 5,
+      }
+    );
+    assert_eq!(
+      Group::new_from_line(&line_2, GroupType::Immune, &Group::get_regs(), 0),
+      Group {
+        id: 0,
+        units_num: 115,
+        hit_points: 10354,
+        immune_to: vec![
+          AttackType::Fire,
+          AttackType::Radiation,
+          AttackType::Bludgeon
+        ],
+        weak_to: vec![],
+        attack_damage: 788,
+        group_type: GroupType::Immune,
+        attack_type: AttackType::Cold,
+        initiative: 2,
+      }
+    );
+  }
+
+  #[test]
+  fn test_run_battle() {
+    let example_data = get_example_data();
+    let mut groups = Group::new_from_text(&example_data);
+
+    Group::run_battle(&mut groups);
+  }
 }
