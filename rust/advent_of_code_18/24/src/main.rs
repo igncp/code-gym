@@ -191,6 +191,147 @@ In the example above, the winning army ends up with 782 + 4434 = 5216 units.
 You scan the reindeer's condition (your puzzle input); the white-bearded man looks nervous. As it
 stands now, how many units would the winning army have?
 
+--- Part Two ---
+
+Things aren't looking good for the reindeer. The man asks whether more milk and cookies would help
+you think.
+
+If only you could give the reindeer's immune system a boost, you might be able to change the
+outcome of the combat.
+
+A boost is an integer increase in immune system units' attack damage. For example, if you were to
+boost the above example's immune system's units by 1570, the armies would instead look like this:
+
+Immune System:
+17 units each with 5390 hit points (weak to radiation, bludgeoning) with
+ an attack that does 6077 fire damage at initiative 2
+989 units each with 1274 hit points (immune to fire; weak to bludgeoning,
+ slashing) with an attack that does 1595 slashing damage at initiative 3
+
+Infection:
+801 units each with 4706 hit points (weak to radiation) with an attack
+ that does 116 bludgeoning damage at initiative 1
+4485 units each with 2961 hit points (immune to radiation; weak to fire,
+ cold) with an attack that does 12 slashing damage at initiative 4
+With this boost, the combat proceeds differently:
+
+Immune System:
+Group 2 contains 989 units
+Group 1 contains 17 units
+Infection:
+Group 1 contains 801 units
+Group 2 contains 4485 units
+
+Infection group 1 would deal defending group 2 185832 damage
+Infection group 1 would deal defending group 1 185832 damage
+Infection group 2 would deal defending group 1 53820 damage
+Immune System group 2 would deal defending group 1 1577455 damage
+Immune System group 2 would deal defending group 2 1577455 damage
+Immune System group 1 would deal defending group 2 206618 damage
+
+Infection group 2 attacks defending group 1, killing 9 units
+Immune System group 2 attacks defending group 1, killing 335 units
+Immune System group 1 attacks defending group 2, killing 32 units
+Infection group 1 attacks defending group 2, killing 84 units
+Immune System:
+Group 2 contains 905 units
+Group 1 contains 8 units
+Infection:
+Group 1 contains 466 units
+Group 2 contains 4453 units
+
+Infection group 1 would deal defending group 2 108112 damage
+Infection group 1 would deal defending group 1 108112 damage
+Infection group 2 would deal defending group 1 53436 damage
+Immune System group 2 would deal defending group 1 1443475 damage
+Immune System group 2 would deal defending group 2 1443475 damage
+Immune System group 1 would deal defending group 2 97232 damage
+
+Infection group 2 attacks defending group 1, killing 8 units
+Immune System group 2 attacks defending group 1, killing 306 units
+Infection group 1 attacks defending group 2, killing 29 units
+Immune System:
+Group 2 contains 876 units
+Infection:
+Group 2 contains 4453 units
+Group 1 contains 160 units
+
+Infection group 2 would deal defending group 2 106872 damage
+Immune System group 2 would deal defending group 2 1397220 damage
+Immune System group 2 would deal defending group 1 1397220 damage
+
+Infection group 2 attacks defending group 2, killing 83 units
+Immune System group 2 attacks defending group 2, killing 427 units
+After a few fights...
+
+Immune System:
+Group 2 contains 64 units
+Infection:
+Group 2 contains 214 units
+Group 1 contains 19 units
+
+Infection group 2 would deal defending group 2 5136 damage
+Immune System group 2 would deal defending group 2 102080 damage
+Immune System group 2 would deal defending group 1 102080 damage
+
+Infection group 2 attacks defending group 2, killing 4 units
+Immune System group 2 attacks defending group 2, killing 32 units
+Immune System:
+Group 2 contains 60 units
+Infection:
+Group 1 contains 19 units
+Group 2 contains 182 units
+
+Infection group 1 would deal defending group 2 4408 damage
+Immune System group 2 would deal defending group 1 95700 damage
+Immune System group 2 would deal defending group 2 95700 damage
+
+Immune System group 2 attacks defending group 1, killing 19 units
+Immune System:
+Group 2 contains 60 units
+Infection:
+Group 2 contains 182 units
+
+Infection group 2 would deal defending group 2 4368 damage
+Immune System group 2 would deal defending group 2 95700 damage
+
+Infection group 2 attacks defending group 2, killing 3 units
+Immune System group 2 attacks defending group 2, killing 30 units
+After a few more fights...
+
+Immune System:
+Group 2 contains 51 units
+Infection:
+Group 2 contains 40 units
+
+Infection group 2 would deal defending group 2 960 damage
+Immune System group 2 would deal defending group 2 81345 damage
+
+Infection group 2 attacks defending group 2, killing 0 units
+Immune System group 2 attacks defending group 2, killing 27 units
+Immune System:
+Group 2 contains 51 units
+Infection:
+Group 2 contains 13 units
+
+Infection group 2 would deal defending group 2 312 damage
+Immune System group 2 would deal defending group 2 81345 damage
+
+Infection group 2 attacks defending group 2, killing 0 units
+Immune System group 2 attacks defending group 2, killing 13 units
+Immune System:
+Group 2 contains 51 units
+Infection:
+No groups remain.
+
+This boost would allow the immune system's armies to win! It would be left with 51 units.
+
+You don't even know how you could boost the reindeer's immune system or what
+effect it might have, so you need to be cautious and find the smallest boost
+that would allow the immune system to win.
+
+How many units does the immune system have left after getting the smallest boost it needs to win?
+
 */
 
 extern crate regex;
@@ -241,7 +382,7 @@ impl Group {
     let regs = Group::get_regs();
     let mut id = 0;
 
-    for (idx, line) in text.lines().enumerate() {
+    for (_, line) in text.lines().enumerate() {
       match line {
         "Immune System:" => {
           group_type = GroupType::Immune;
@@ -314,7 +455,7 @@ impl Group {
     let caps = line_reg.captures(line).unwrap();
     let (immune_to, weak_to) = parse_stats(caps.get(3).unwrap().as_str(), regs);
 
-    let mut group = Group {
+    Group {
       id,
       units_num: caps.get(1).unwrap().as_str().parse::<usize>().unwrap(),
       hit_points: caps.get(2).unwrap().as_str().parse::<usize>().unwrap(),
@@ -324,37 +465,40 @@ impl Group {
       attack_damage: caps.get(4).unwrap().as_str().parse::<usize>().unwrap(),
       attack_type: parse_attack_type(caps.get(5).unwrap().as_str()),
       initiative: caps.get(6).unwrap().as_str().parse::<usize>().unwrap(),
-    };
-
-    group
+    }
   }
 
-  fn run_battle(groups: &mut Vec<Group>) {
+  fn run_battle(mut groups: &mut Vec<Group>) {
     fn get_fight_selections(groups: &mut Vec<Group>) -> HashMap<GroupId, Option<GroupId>> {
       let mut fight_selections = HashMap::new();
       let mut attacked_groups: HashSet<GroupId> = HashSet::new();
-      let mut attacking_groups = groups.clone();
 
-      attacking_groups.sort_by(|a, b| {
-        match b.get_effective_power().cmp(&a.get_effective_power()) {
+      groups.sort_by(
+        |a, b| match b.get_effective_power().cmp(&a.get_effective_power()) {
           Ordering::Equal => b.initiative.cmp(&a.initiative),
           v => v,
-        }
-      });
+        },
+      );
+
+      let attacking_groups = groups.clone();
 
       for attacking_group in attacking_groups {
         let mut max_damage = 0;
         let mut attacked_candidates: Vec<Group> = vec![];
 
         for defending_group in groups.clone() {
-          if defending_group.id == attacking_group.id
-            || defending_group.group_type == attacking_group.group_type
+          if defending_group.group_type == attacking_group.group_type
             || attacked_groups.contains(&defending_group.id)
+            || defending_group.units_num == 0
           {
             continue;
           }
 
           let damage = attacking_group.get_damage_to_group(&defending_group);
+
+          if damage == 0 {
+            continue;
+          }
 
           match damage.cmp(&max_damage) {
             Ordering::Equal => {
@@ -362,23 +506,164 @@ impl Group {
             }
             Ordering::Greater => {
               max_damage = damage;
-              attacked_candidates = vec![];
-              attacked_candidates.push(defending_group.clone());
+              attacked_candidates = vec![defending_group.clone()];
             }
             _ => {}
           }
         }
-      }
 
-      std::process::exit(1);
+        let attacked_group_id = if !attacked_candidates.is_empty() {
+          attacked_groups.insert(attacked_candidates[0].id);
+          Some(attacked_candidates[0].id)
+        } else {
+          None
+        };
+
+        fight_selections.insert(attacking_group.id, attacked_group_id);
+      }
 
       fight_selections
     }
 
+    fn perform_attacks(
+      groups: &mut Vec<Group>,
+      fight_selections: &HashMap<usize, Option<usize>>,
+    ) -> bool {
+      groups.sort_by(|a, b| b.initiative.cmp(&a.initiative));
+      let mut were_attacks = false;
+
+      let mut attacks_num = 0;
+      let mut last_attacked_group_id = 0;
+      let mut last_attacking_group_id = 0;
+
+      for (key, id) in fight_selections {
+        if fight_selections[&key].is_some() {
+          attacks_num += 1;
+          last_attacked_group_id = id.unwrap();
+          last_attacking_group_id = *key;
+        }
+      }
+
+      // optimization
+      if attacks_num == 1 {
+        let attacked_group_index = groups
+          .iter()
+          .position(|r| r.id == last_attacked_group_id)
+          .unwrap();
+        let attacking_group_idx = groups
+          .iter()
+          .position(|r| r.id == last_attacking_group_id)
+          .unwrap();
+
+        let damage = groups[attacking_group_idx].get_damage_to_group(&groups[attacked_group_index]);
+
+        if damage > 0 && damage > groups[attacked_group_index].hit_points {
+          groups[attacked_group_index].units_num = 0;
+
+          return true;
+        } else {
+          return false;
+        }
+      }
+
+      for attacking_group in groups.clone() {
+        let attacked_group_id = fight_selections[&attacking_group.id];
+        let mut attacking_group_idx = groups
+          .iter()
+          .position(|r| r.id == attacking_group.id)
+          .unwrap();
+
+        if groups[attacking_group_idx].units_num > 0 && attacked_group_id.is_some() {
+          let attacked_group_index = groups
+            .iter()
+            .position(|r| r.id == attacked_group_id.unwrap())
+            .unwrap();
+
+          let damage =
+            groups[attacking_group_idx].get_damage_to_group(&groups[attacked_group_index]);
+
+          groups[attacked_group_index].receive_damage(damage);
+
+          if damage > 0 {
+            were_attacks = true;
+          }
+        }
+      }
+
+      were_attacks
+    }
+
     loop {
       let fight_selections = get_fight_selections(groups);
-      // attacks phase
+
+      let were_attacks = perform_attacks(&mut groups, &fight_selections);
+
+      let mut remaining_groups: HashSet<GroupType> = HashSet::new();
+
+      for group in groups.clone() {
+        if group.units_num > 0 {
+          remaining_groups.insert(group.group_type);
+        }
+      }
+
+      if remaining_groups.len() < 2 || !were_attacks {
+        break;
+      }
     }
+  }
+
+  fn get_units_on_min_immune_win(groups: &[Group]) -> usize {
+    let mut boost = 1;
+
+    loop {
+      let mut used_groups = groups.to_owned();
+
+      for mut group in used_groups.iter_mut() {
+        if group.group_type == GroupType::Immune {
+          group.attack_damage += boost;
+        }
+      }
+
+      Group::run_battle(&mut used_groups);
+
+      let winning_group = Group::get_winning_group(&used_groups);
+
+      if winning_group == Some(GroupType::Immune) {
+        return Group::get_remaining_units_for_group_type(&used_groups, GroupType::Immune);
+      }
+
+      boost += 1;
+    }
+  }
+
+  fn get_remaining_units_for_groups(groups: &[Group]) -> usize {
+    groups.iter().fold(0, |sum, x| x.units_num + sum)
+  }
+
+  fn get_remaining_units_for_group_type(groups: &[Group], group_type: GroupType) -> usize {
+    groups.iter().fold(0, |sum, x| {
+      if x.group_type == group_type {
+        sum + x.units_num
+      } else {
+        sum
+      }
+    })
+  }
+
+  fn get_winning_group(groups: &[Group]) -> Option<GroupType> {
+    let mut winners: HashSet<GroupType> = HashSet::new();
+
+    for group in groups {
+      if group.units_num > 0 {
+        winners.insert(group.group_type);
+      }
+    }
+
+    if winners.len() == 1 {
+      return Some(*winners.iter().nth(0).unwrap());
+    }
+
+    None
   }
 
   fn get_effective_power(&self) -> usize {
@@ -398,6 +683,13 @@ impl Group {
 
     effective_power
   }
+
+  fn receive_damage(&mut self, damage: usize) {
+    let units_lost = damage / self.hit_points;
+    let new_units = std::cmp::max(self.units_num as i32 - units_lost as i32, 0);
+
+    self.units_num = new_units as usize;
+  }
 }
 
 fn get_input_groups() -> Vec<Group> {
@@ -412,10 +704,17 @@ fn get_input_groups() -> Vec<Group> {
 
 fn main() {
   let mut groups = get_input_groups();
+  let cloned_groups = groups.clone();
 
   Group::run_battle(&mut groups);
 
+  let remaining_units = Group::get_remaining_units_for_groups(&groups);
+
+  let remaining_units_2 = Group::get_units_on_min_immune_win(&cloned_groups);
+
   println!("Results:");
+  println!("- (1) remaining units {}", remaining_units);
+  println!("- (2) remaining units {}", remaining_units_2);
 }
 
 #[cfg(test)]
@@ -477,5 +776,18 @@ Infection:
     let mut groups = Group::new_from_text(&example_data);
 
     Group::run_battle(&mut groups);
+
+    let remaining_units = Group::get_remaining_units_for_groups(&groups);
+
+    assert_eq!(remaining_units, 5216);
+  }
+
+  #[test]
+  fn test_get_units_on_min_immune_win() {
+    let example_data = get_example_data();
+    let groups = Group::new_from_text(&example_data);
+    let units_num = Group::get_units_on_min_immune_win(&groups);
+
+    assert_eq!(units_num, 51);
   }
 }

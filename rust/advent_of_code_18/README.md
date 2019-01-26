@@ -8,7 +8,7 @@ https://adventofcode.com/2018
 - [06](./06/src/main.rs) [07](./07/src/main.rs) [08](./08/src/main.rs) [09](./09/src/main.rs) [10](./10/src/main.rs)
 - [11](./11/src/main.rs) [12](./12/src/main.rs) [13](./13/src/main.rs) [14](./14/src/main.rs) [15](./15/src/main.rs)
 - [16](./16/src/main.rs) [17](./17/src/main.rs) [18](./18/src/main.rs) [19](./19/src/main.rs) [20](./20/src/main.rs)
-- [21](./21/src/main.rs) [22](./22/src/main.rs) [23](./23/src/main.rs)
+- [21](./21/src/main.rs) [22](./22/src/main.rs) [23](./23/src/main.rs) [24](./24/src/main.rs) [25](./25/src/main.rs)
 
 ## Run
 
