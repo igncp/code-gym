@@ -5,3 +5,7 @@ by me, but I wrote the comments in this repository
 
 - aws-lambda: [code](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/363cdf403a74e0372e87bbcd15eb1668f4c5230b/types/aws-lambda) and [comments](./aws-lambda)
 - react-redux [code](https://github.com/DefinitelyTyped/DefinitelyTyped/tree/363cdf403a74e0372e87bbcd15eb1668f4c5230b/types/react-redux) and [comments](./react-redux)
+
+For custom tests, the following is created:
+
+- custom: [code](./custom)
