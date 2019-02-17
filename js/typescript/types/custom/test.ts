@@ -1,7 +1,8 @@
 import {
   pluck,
   proxify,
-  getWithDynamicType
+  getWithDynamicType,
+  getFirstThree
 } from '.';
 
 // --- start (1)
@@ -30,5 +31,11 @@ const oneVal: string = getWithDynamicType(1);
 // const oneVal_num: number = getWithDynamicType(1); // ERROR: number is not expected when 1
 const threeVal: number = getWithDynamicType(3);
 // const threeVal_str: string = getWithDynamicType(3); // ERROR: string is not expected when 3
+
+const resultFirstThree: 1 = getFirstThree(1);
+// const resultFirstThree2: 5 = getFirstThree(4); // ERROR: null is not assignable to 5
+
+const extracted1: Extract<1 | 2, number> = 1;
+// const extracted2: Extract<1 | 2, string> = 1;  // ERROR: 1 is not assignable to 'never'
 
 // --- end (1)

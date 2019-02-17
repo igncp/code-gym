@@ -19,4 +19,6 @@ export declare const proxify: <T>(o: T) => Proxify<T>;
 
 export declare const getWithDynamicType: <T extends number>(x: T) => T extends (1 | 2) ? string : number;
 
+export declare const getFirstThree: <T extends number>(x: T) => T extends (1 | 2 | 3) ? T : null;
+
 // --- end (1)
