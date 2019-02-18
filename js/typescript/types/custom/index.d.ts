@@ -21,4 +21,6 @@ export declare const getWithDynamicType: <T extends number>(x: T) => T extends (
 
 export declare const getFirstThree: <T extends number>(x: T) => T extends (1 | 2 | 3) ? T : null;
 
+export declare const getArray: <T>(x: T) => (T extends any[] ? void : T[]);
+
 // --- end (1)

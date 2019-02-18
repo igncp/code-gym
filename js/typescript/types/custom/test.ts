@@ -2,6 +2,7 @@ import {
   pluck,
   proxify,
   getWithDynamicType,
+  getArray,
   getFirstThree
 } from '.';
 
@@ -37,5 +38,10 @@ const resultFirstThree: 1 = getFirstThree(1);
 
 const extracted1: Extract<1 | 2, number> = 1;
 // const extracted2: Extract<1 | 2, string> = 1;  // ERROR: 1 is not assignable to 'never'
+
+const numsArray: number[] = getArray(1);
+const numsArray2: string[] = getArray('a');
+// const numsArray3: string[] = getArray([1]); // ERROR: void is not assignable to type `string[]`
+// const numsArray4: string[] = getArray(['a']); // ERROR: void is not assignable to type `string[]`
 
 // --- end (1)
