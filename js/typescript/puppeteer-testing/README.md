@@ -10,3 +10,5 @@ sh run.sh
 
 - Intro article: https://www.valentinog.com/blog/ui-testing-jest-puppetteer
 - API: https://github.com/GoogleChrome/puppeteer/blob/v1.13.0/docs/api.md
+- Examples: https://github.com/GoogleChromeLabs/puppeteer-examples
+- Awesome List: https://github.com/transitive-bullshit/awesome-puppeteer
