@@ -1,0 +1,14 @@
+{
+  "name": "own-tests",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dtslint": "dtslint types"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "dtslint": "^0.5.3"
+  }
+}
