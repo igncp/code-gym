@@ -1,0 +1,32 @@
+{
+  "name": "plastic-kitchen",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "rm -rf build && webpack",
+    "serve": "http-server -p 9000 build",
+    "test": "mkdir -p test-assets && npm run build && jest > test-assets/test.log",
+    "watch": "webpack --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^24.0.11",
+    "@types/puppeteer": "^1.12.3",
+    "html-loader": "^0.5.5",
+    "html-webpack-plugin": "^3.2.0",
+    "http-server": "^0.11.1",
+    "jest": "^24.5.0",
+    "jest-puppeteer": "^4.1.0",
+    "lit-element": "^2.1.0",
+    "puppeteer": "^1.13.0",
+    "ts-jest": "^24.0.0",
+    "ts-loader": "^5.3.3",
+    "typescript": "^3.3.4000",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0"
+  },
+  "dependencies": {}
+}
