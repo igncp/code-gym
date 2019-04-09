@@ -1,5 +1,7 @@
 import { LitElement, html, property, customElement } from 'lit-element';
 
+import './carousel';
+
 @customElement('simple-greeting')
 export class SimpleGreeting extends LitElement {
   @property() name = 'World';
@@ -14,6 +16,7 @@ export class App extends LitElement {
   render() {
     return html`
   <h1>Plastic Kitchen</h1>
-  <simple-greeting name="Everyone"></simple-greeting>`;
+  <simple-greeting name="Everyone"></simple-greeting>
+  <carousel></carousel>`;
   }
 }
