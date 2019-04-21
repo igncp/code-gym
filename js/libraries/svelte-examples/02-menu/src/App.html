@@ -1,0 +1,22 @@
+<Menu menuItems="{menuItems}"></Menu>
+
+<script>
+  import Menu from './Menu/Menu.html';
+
+  const menuItems = [
+    {
+      name: 'foo',
+      onClick: () => console.log('FOO was clicked'),
+    },
+    {
+      name: 'baz',
+    },
+  ];
+
+  export default {
+    data: () => ({menuItems}),
+    components: {
+      Menu,
+    },
+  };
+</script>

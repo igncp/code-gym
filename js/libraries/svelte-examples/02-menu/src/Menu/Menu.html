@@ -1,0 +1,96 @@
+<div>
+  Click <u class="trigger" on:click="handleTriggerClick()">here</u> to trigger
+  menu
+</div>
+
+<div
+  class="menu-mask {isDisplayed ? '' : 'menu-mask-hidden'}"
+  on:click="handleTriggerClick()"
+></div>
+
+<div class="menu {isDisplayed ? '' : 'menu-hidden'}">
+  Menu Content {#each parsedItems as menuItem}
+  <div on:click="handleItemClick(menuItem)">Menu Item: {menuItem.name}</div>
+  {/each}
+
+  <div on:click="handleTriggerClick()" class="trigger">Hide</div>
+</div>
+
+<script>
+  function oncreate() {
+    this.set({
+      createdTime: new Date(),
+    });
+  }
+
+  function handleTriggerClick() {
+    const {isDisplayed} = this.get();
+
+    this.set({isDisplayed: !isDisplayed});
+  }
+
+  function handleItemClick(item) {
+    if (item.onClick) {
+      item.onClick();
+    } else {
+      console.warn('FUNCTION not implemented');
+    }
+  }
+
+  const data = () => ({
+    isDisplayed: false,
+  });
+
+  export default {
+    immutable: true,
+    oncreate,
+    data,
+    computed: {
+      parsedItems: ({menuItems}) =>
+        menuItems.concat([
+          {
+            name: 'extra',
+          },
+        ]),
+    },
+    methods: {
+      handleTriggerClick,
+      handleItemClick,
+    },
+  };
+</script>
+
+<style>
+  .trigger {
+    cursor: pointer;
+  }
+
+  .menu {
+    background-color: white;
+    border: 1px solid black;
+    bottom: 0;
+    transform: translateX(0);
+    z-index: 2;
+    position: absolute;
+    top: 0;
+    transition: ease-out transform 0.3s;
+    width: 200px;
+  }
+
+  .menu-mask {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1;
+    position: absolute;
+    top: 0;
+  }
+
+  .menu-hidden {
+    transform: translateX(-210px);
+  }
+
+  .menu-mask-hidden {
+    display: none;
+  }
+</style>

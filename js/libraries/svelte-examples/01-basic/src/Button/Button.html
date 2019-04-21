@@ -1,0 +1,21 @@
+<div class="button" on:click="handleClick()">
+    You clicked this {count} times
+</div>
+
+<script>
+    import {handleClick, data} from './Button.js';
+
+    export default {
+      data,
+      methods: {
+        handleClick,
+      },
+    };
+</script>
+
+<style>
+    .button {
+        cursor: pointer;
+        user-select: none;
+    }
+</style>
