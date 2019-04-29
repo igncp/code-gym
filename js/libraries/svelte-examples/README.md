@@ -7,7 +7,8 @@ questions about the framework that I try to answer along.
 ## Completed
 
 - [01-basic](./01-basic)
-- [01-basic](./02-menu)
+- [02-basic](./02-menu)
+- [03-drag-n-drop](./03-drag-n-drop)
 
 ## On-going
 

@@ -12,7 +12,7 @@ This example shows how to:
     - Add all the functionality in a single component: `Menu.html`
     - Learnt how the Scoped Styles work:
         - Not truly scoped. E.g. `.menu.svelte-123`: If a external stylesheet with `.menu`, it would pick it.
-    - Used `immutable: true` to allow strict checks and improve performance: https://svelte.technology/guide#immutable
+    - Used `immutable: true` to allow strict checks and improve performance: https://svelte.dev/docs#svelte_options
 - Use Prettier to format HTML files, and use ESLint after for extra linting
     - Needs to use a special parser for HTML files to prevent changing elements case
 
