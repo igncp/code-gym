@@ -6,6 +6,7 @@ Project with examples in different languages
 
 These are the most important additions added recently (higher means newer):
 
+- Created the Katas project: [Link](./katas)
 - Research about Svelte for performant UI components: [Link](./js/libraries/svelte-examples)
 - Puppeteer API PoC (using Docker and TypeScript): [Link](./js/typescript/puppeteer-testing)
 - TypeScript Advanced Types definitions: [Link](./js/typescript/types)
