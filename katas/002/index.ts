@@ -172,7 +172,7 @@ const main = () => {
 
   const result = graph.findPathWithDijkstra("C");
 
-  // This solutions are not confirmed with an official result
+  // These solutions are not confirmed with an official result
   assert.deepEqual(result.paths.A, null);
   assert.deepEqual(result.paths.D, { path: ["C", "D"], total: 18 });
   assert.deepEqual(result.dequeueOrder, [
