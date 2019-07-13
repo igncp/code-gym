@@ -8,18 +8,19 @@ Write a program that outputs all possibilities to put + or - or nothing between 
 
 - Try and understand: https://stackoverflow.com/a/4633515/3244654
     - Recursive permutation
-- It can be considered as a combinatory problem where every separation item between the 9 digits is: `+`, or `-`, or `''`
+- It can be considered as a combinatory problem where every separation item between the 9 digits is: `'+'`, or `'-'`, or `''`
 - Will try brute-force approach
 
 ## Solution
 
 - Implemented in TypeScript
 - Verify: `npm start`
-- It is using a recursive search where it build the combinations of
-  operations and computes the result when finished
-- Used a simple TDD approach using `assert` module and commenting cases
+- Used a recursive approach where it builds the combinations of operations and
+  computes each result when finished
+- Followed a TDD workflow using `assert` module and commenting checks when necessaru
 - Possible optimizations:
     - Better data structure for the operations array
+    - Stop branch when result too high with remaining numbers
 
 ## Sources
 
