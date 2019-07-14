@@ -1,0 +1,21 @@
+{
+  "name": "004",
+  "version": "1.0.0",
+  "private": true,
+  "description": "## Problem",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npm run -s format && npm run -s start",
+    "format": "prettier --write index.ts",
+    "start": "ts-node index.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^12.6.2",
+    "prettier": "^1.18.2",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
+  }
+}
