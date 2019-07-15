@@ -1,11 +1,12 @@
 # Katas
 
-|Completed|Link|Language|Summary
-|---|---|---|---|
-|:white_check_mark:|[001](./001)|TypeScript|Combinations of operations with given result|
-|:white_check_mark:|[002](./002)|TypeScript|Shortest path in graph using Dijkstra|
-|:white_check_mark:|[003](./003)|TypeScript|Get if a combination in a list is present|
-|:white_check_mark:|[004](./004)|TypeScript|Roman numbers converter|
+|Link|Summary|
+|---|---|
+|[001](./001)|Combinations of operations with given result|
+|[002](./002)|Shortest path in graph using Dijkstra|
+|[003](./003)|Get if a combination in a list is present|
+|[004](./004)|Roman numbers converter|
+|[005](./005)|Quicksort|
 
 ## Sources
 
@@ -17,6 +18,7 @@
 ### Articles
 
 - Dijkstra: https://www.geeksforgeeks.org/dijkstras-shortest-path-algorithm-greedy-algo-7/
+- Most important algorithms: http://www.koutschan.de/misc/algorithms.php
 
 ### Cheatsheets
 
