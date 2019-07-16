@@ -7,6 +7,7 @@
 |[003](./003)|Get if a combination in a list is present|
 |[004](./004)|Roman numbers converter|
 |[005](./005)|Quicksort|
+|[006](./006)|Insert Sort|
 
 ## Sources
 
@@ -23,3 +24,7 @@
 ### Cheatsheets
 
 - https://medium.com/@stephen_gou/data-structures-and-algorithms-cheat-sheet-b06c7ff5515f
+
+## Ideas
+
+- Add benchmark library
