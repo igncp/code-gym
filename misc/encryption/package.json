@@ -1,0 +1,20 @@
+{
+  "name": "encryption",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "format": "prettier --write --tab-width 4 'tests/**/*.ts'",
+    "test": "rm -rf out; tsc; tape 'out/**/*.test.js'"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jsonwebtoken": "^8.3.3",
+    "@types/tape": "^4.2.33",
+    "jsonwebtoken": "^8.5.1",
+    "prettier": "^1.18.2",
+    "tape": "^4.11.0",
+    "typescript": "^3.5.3"
+  }
+}
