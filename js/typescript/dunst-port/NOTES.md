@@ -32,11 +32,18 @@ These commands are working:
 ## References
 
 - GQueue: https://developer.gnome.org/glib/stable/glib-Double-ended-Queues.html
+- NTK: https://github.com/sidorares/ntk
 
 ## Unstructured
 
 - The `src/queues.c` file uses `GQueue` from `<glib>`, which is a double-linked queue
 - The entry point is in `src/dunst.c#dunst_main`
+
+## TODO
+
+- app: Complete DBus initialization
+- poc: Create ntk poc
+- poc: Try other methods for notifications using DBus
 
 ## Initial Template
 
