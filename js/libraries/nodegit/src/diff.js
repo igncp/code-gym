@@ -2,19 +2,24 @@
 // https://github.com/thisconnect/nodegit-kit/blob/master/lib/diff.js
 
 const getHunks = async hunk => {
+  // * https://www.nodegit.org/api/diff_line/
   const lines = await hunk.lines();
   const diff = lines.map(line => {
     let change = " ";
 
+    // * https://www.nodegit.org/api/diff_line/#newLineno
+    // * https://www.nodegit.org/api/diff_line/#oldLineno
     if (line.newLineno() === -1) {
       change = "-";
     } else if (line.oldLineno() === -1) {
       change = "+";
     }
 
+    // * https://www.nodegit.org/api/diff_line/#content
     return change + line.content().trim();
   });
 
+  // header(): 'Something like `@@ -169,14 +167,12 @@ ...`'
   return [hunk.header().trim()].concat(diff).join("\n");
 };
 
