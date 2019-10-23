@@ -19,3 +19,5 @@
 - Roadmap: https://github.com/vuejs/vue/projects/6
 - Awesome Vue: https://github.com/vuejs/awesome-vue
 - Advanced Vue: https://github.com/filrak/vuejs-advanced-learning
+- Patterns: https://learn-vuejs.github.io/vue-patterns/patterns
+- Components Communication: https://alligator.io/vuejs/component-communication/
