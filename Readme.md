@@ -6,6 +6,7 @@ Project with examples in different languages
 
 These are the most important additions added recently (higher means newer):
 
+- Did several exercises with Vue.js (concepts, TypeScript, unit tests, ...): [Link](./js/libraries/vue)
 - Created the Katas project: [Link](./katas)
 - Research about Svelte for performant UI components: [Link](./js/libraries/svelte-examples)
 - Puppeteer API PoC (using Docker and TypeScript): [Link](./js/typescript/puppeteer-testing)
