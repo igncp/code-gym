@@ -5,6 +5,7 @@
 ## List of Completed
 
 - [01](./01)
+- [02](./02)
 
 ## Objectives
 
@@ -18,8 +19,7 @@ These may change in future, but all examples should comply with them:
 - 100% line coverage for `lib.ts`
 - TDD
 - Different approaches:
-    - Indicated in each exercise
-    - Example:Functional programming, object oriented, data driven
+    - Example: Functional programming, object oriented, data driven
 - Minimize dependencies (listed all here):
     - Language: `typescript`, `ts-node`
     - Test: Jest
@@ -33,16 +33,8 @@ These may change in future, but all examples should comply with them:
     - Scripts
     - ESLint and Prettier config
     - Format for output
-- Examples can have different:
-    - Unit tests framworks
+    - Assertions in `main.ts` with correct values (after completion)
 
 ## TODO:
 
-- Move all `node_modules` into root
-- Update dependencies
-- Add scripts from top-level
-- Setup prettier
-- Setup ESLint
-- Move all configs to root level (except maybe `tsconfig.json`)
-- Setup types and tests coverages limits
 - Periodic: Refactor interfaces
