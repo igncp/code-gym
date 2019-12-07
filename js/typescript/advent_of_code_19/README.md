@@ -38,3 +38,5 @@ These may change in future, but all examples should comply with them:
 ## TODO:
 
 - Periodic: Refactor interfaces
+- Periodic: Add ESLint rules
+- Build files to make sure they compile
