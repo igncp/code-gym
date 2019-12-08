@@ -171,6 +171,7 @@ const convertWirePathsIntoMapStr: ConvertWirePathsIntoMapStr = paths => {
           updateMapWithChar("|");
         }
       }
+
       if (step[0] === WireDirection.Left) {
         for (let x = pos[0]; x > initX - step[1]; x -= 1) {
           pos[0] -= 1;
@@ -247,6 +248,7 @@ const getWirePathPointsInfo: GetWirePathPointsInfo = w => {
           addPosition();
         }
       }
+
       if (step[0] === WireDirection.Left) {
         for (let x = pos[0]; x > initX - step[1]; x -= 1) {
           pos[0] -= 1;

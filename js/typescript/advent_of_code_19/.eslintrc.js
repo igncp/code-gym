@@ -2,6 +2,7 @@ module.exports = {
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:jest/recommended",
     "plugin:@typescript-eslint/recommended"
   ],
   env: {
@@ -21,6 +22,12 @@ module.exports = {
     "@typescript-eslint/no-unused-vars": 2,
 
     "newline-before-return": 2,
-    semi: 2
+    semi: 2,
+    "padding-line-between-statements": [
+      "error",
+      { blankLine: "always", prev: "*", next: "if" },
+      { blankLine: "always", prev: "*", next: "multiline-expression" },
+      { blankLine: "always", prev: "*", next: "block-like" }
+    ]
   }
 };

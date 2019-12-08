@@ -60,11 +60,14 @@ describe("runProgramTillEnd", () => {
     expected: [string, ExecutionPosition],
     options?: RunProgramTillEndOpts
   ) => void;
+
   const compare: Compare = (str, expected, options) => {
     const result = runProgramTillEnd([convertStrToProgram(str), 0], options);
+
     expect(result).toEqual([convertStrToProgram(expected[0]), expected[1]]);
   };
 
+  // eslint-disable-next-line jest/expect-expect
   it("returns the expected results for examples", () => {
     compare("1,0,0,0,99", ["2,0,0,0,99", 4]);
     compare("2,3,0,3,99", ["2,3,0,6,99", 4]);
@@ -72,6 +75,7 @@ describe("runProgramTillEnd", () => {
     compare("1,1,1,4,99,5,6,0,99", ["30,1,1,4,2,5,6,0,99", 8]);
   });
 
+  // eslint-disable-next-line jest/expect-expect
   it("can accept options", () => {
     compare("1,0,0,0,99", ["2,0,0,0,99", 4], {});
     compare("1,0,0,0,99", ["1,0,0,0,99", 0], { maxLoops: 0 });
@@ -85,6 +89,7 @@ describe("getVerbAndNounForResult", () => {
       result: IntcodeValue,
       expected: { verb: ExecutionPosition; noun: ExecutionPosition }
     ) => void;
+
     const compare: Compare = (str, result, expected) => {
       const actual = getVerbAndNounForResult(convertStrToProgram(str), result);
       expect(actual).toEqual(expected);

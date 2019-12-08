@@ -26,6 +26,7 @@ describe("convertWirePathIntoMapStr", () => {
   it("returns the expected map for one wire", () => {
     const wirePath = parseLineIntoWirePath("R8,U5,L5,D3");
     const result = convertWirePathsIntoMapStr([wirePath]);
+
     expect(result).toEqual(`...........
 ....+----+.
 ....|....|.
@@ -39,6 +40,7 @@ describe("convertWirePathIntoMapStr", () => {
   it("returns the expected map for one wire (2)", () => {
     const wirePath = parseLineIntoWirePath("R8,U5,L5,D6,L4");
     const result = convertWirePathsIntoMapStr([wirePath]);
+
     expect(result).toEqual(`............
 .....+----+.
 .....|....|.
@@ -77,12 +79,14 @@ describe("getManhattanDistanceOfClosestCrossing", () => {
         parseLineIntoWirePath("U7,R6,D4,L4")
       )
     ).toEqual(6);
+
     expect(
       getManhattanDistanceOfClosestCrossing(
         parseLineIntoWirePath("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
         parseLineIntoWirePath("U62,R66,U55,R34,D71,R55,D58,R83")
       )
     ).toEqual(159);
+
     expect(
       getManhattanDistanceOfClosestCrossing(
         parseLineIntoWirePath("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
@@ -100,12 +104,14 @@ describe("getFewestCombinedStepsOfCrossing", () => {
         parseLineIntoWirePath("U7,R6,D4,L4")
       )
     ).toEqual(30);
+
     expect(
       getFewestCombinedStepsOfCrossing(
         parseLineIntoWirePath("R75,D30,R83,U83,L12,D49,R71,U7,L72"),
         parseLineIntoWirePath("U62,R66,U55,R34,D71,R55,D58,R83")
       )
     ).toEqual(610);
+
     expect(
       getFewestCombinedStepsOfCrossing(
         parseLineIntoWirePath("R98,U47,R26,D63,R33,U87,L62,D20,R33,U53,R51"),
