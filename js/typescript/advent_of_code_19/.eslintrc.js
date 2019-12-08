@@ -13,10 +13,14 @@ module.exports = {
   parser: "@typescript-eslint/parser",
   plugins: ["@typescript-eslint"],
   rules: {
+    "@typescript-eslint/array-type": 2,
+    "@typescript-eslint/brace-style": 2,
     "@typescript-eslint/explicit-function-return-type": 0,
+    "@typescript-eslint/no-floating-promises": 2,
     "@typescript-eslint/no-non-null-assertion": 0,
     "@typescript-eslint/no-unused-vars": 2,
 
+    "newline-before-return": 2,
     semi: 2
   }
 };

@@ -1,6 +1,9 @@
 module.exports = {
   preset: "ts-jest",
   testMatch: ["**/tests.ts"],
+  globals: {
+    __TEST__: true
+  },
   coverageThreshold: {
     global: {
       branches: 100,

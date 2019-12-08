@@ -12,31 +12,20 @@
 These may change in future, but all examples should comply with them:
 
 - All in TypeScript
-- Consistent files:
-  - `main.ts`, `lib.ts`, `test.ts`, `README.md`, `input.txt`
-  - `package.json`, `package-lock.json`, `tsconfig.json`
 - 100% type coverage for `lib.ts`
 - 100% line coverage for `lib.ts`
 - TDD
 - Different approaches:
     - Example: Functional programming, object oriented, data driven
-- Minimize dependencies (listed all here):
-    - Language: `typescript`, `ts-node`
-    - Test: Jest
-    - Lint: ESLint, Prettier
-- Scripts:
-    - `npm run check`: Linting, Prettier and type coverage
-    - `npm test`: Unit tests for `lib.ts`
-    - `npm run fix`: ESLint and Prettier fixer
-    - `npm start`: Run `main.ts` with my input
+- Minimize dependencies
 - All examples should have same:
     - Scripts
-    - ESLint and Prettier config
-    - Format for output
-    - Assertions in `main.ts` with correct values (after completion)
+    - ESLint, Build, Tests, type-coverage and Prettier config
+    - Assertions in `main.ts` with correct values (Obtained after completion)
 
 ## TODO:
 
 - Periodic: Refactor interfaces
+    - Only expose methods that could be useful, the rest expose only for tests
 - Periodic: Add ESLint rules
-- Build files to make sure they compile
+    - https://github.com/typescript-eslint/typescript-eslint/tree/master/packages/eslint-plugin

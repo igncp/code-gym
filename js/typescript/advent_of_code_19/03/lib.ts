@@ -128,7 +128,7 @@ const convertWirePathsIntoMapStr: ConvertWirePathsIntoMapStr = paths => {
   );
 
   for (let y = maxY + 1; y > minY - 2; y -= 1) {
-    const line = [];
+    const line: string[] = [];
 
     for (let x = minX - 1; x < maxX + 2; x += 1) {
       line.push(".");
@@ -188,9 +188,155 @@ const convertWirePathsIntoMapStr: ConvertWirePathsIntoMapStr = paths => {
   return map.map(line => line.join("")).join("\n");
 };
 
+type SerializePosition = (pos: Position) => string;
+
+const serializePosition: SerializePosition = pos => {
+  return pos[0] + "_" + pos[1];
+};
+
+type DeserializePosition = (s: string) => Position;
+
+const deserializePosition: DeserializePosition = s => {
+  const idx = s.indexOf("_");
+
+  return [Number(s.slice(0, idx)), Number(s.slice(idx + 1, s.length))];
+};
+
+type StepsMap = { [point: string]: number };
+
+type GetWirePathPointsInfo = (
+  w: WirePath
+) => {
+  pointsSet: Set<string>;
+  steps: StepsMap;
+};
+
+const getWirePathPointsInfo: GetWirePathPointsInfo = w => {
+  const pos: Position = [0, 0];
+  let steps = 0;
+
+  const initSet: Set<string> = new Set();
+  const initSteps: StepsMap = {};
+
+  return w.reduce(
+    (acc, step) => {
+      const initX = pos[0];
+      const initY = pos[1];
+
+      const addPosition = () => {
+        const posStr = serializePosition(pos);
+        acc.pointsSet.add(posStr);
+
+        if (!acc.steps[posStr]) {
+          acc.steps[posStr] = steps;
+        }
+      };
+
+      addPosition();
+
+      if (step[0] === WireDirection.Down) {
+        for (let y = pos[1]; y > initY - step[1]; y -= 1) {
+          pos[1] -= 1;
+          steps += 1;
+          addPosition();
+        }
+      } else if (step[0] === WireDirection.Up) {
+        for (let y = pos[1]; y < initY + step[1]; y += 1) {
+          pos[1] += 1;
+          steps += 1;
+          addPosition();
+        }
+      }
+      if (step[0] === WireDirection.Left) {
+        for (let x = pos[0]; x > initX - step[1]; x -= 1) {
+          pos[0] -= 1;
+          steps += 1;
+          addPosition();
+        }
+      } else if (step[0] === WireDirection.Right) {
+        for (let x = pos[0]; x < initX + step[1]; x += 1) {
+          pos[0] += 1;
+          steps += 1;
+          addPosition();
+        }
+      }
+
+      return acc;
+    },
+    { pointsSet: initSet, steps: initSteps }
+  );
+};
+
+type GetWiresCrossings = (wireA: WirePath, wireB: WirePath) => Position[];
+
+type GetManhattanDistanceOfClosestCrossing = (
+  wireA: WirePath,
+  wireB: WirePath
+) => number;
+
+const getManhattanDistanceOfClosestCrossing: GetManhattanDistanceOfClosestCrossing = (
+  wireA,
+  wireB
+) => {
+  const { pointsSet: pointsA } = getWirePathPointsInfo(wireA);
+  const { pointsSet: pointsB } = getWirePathPointsInfo(wireB);
+
+  const intersection = new Set(Array.from(pointsA).filter(x => pointsB.has(x)));
+
+  return Array.from(intersection)
+    .filter(i => i !== "0_0")
+    .map(deserializePosition)
+    .reduce((acc, crossing) => {
+      const distance = Math.abs(crossing[0]) + Math.abs(crossing[1]);
+
+      return Math.min(distance, acc);
+    }, Infinity);
+};
+
+type GetFewestCombinedStepsOfCrossing = (
+  wireA: WirePath,
+  wireB: WirePath
+) => number;
+
+const getFewestCombinedStepsOfCrossing: GetFewestCombinedStepsOfCrossing = (
+  wireA,
+  wireB
+) => {
+  const { pointsSet: pointsA, steps: stepsA } = getWirePathPointsInfo(wireA);
+  const { pointsSet: pointsB, steps: stepsB } = getWirePathPointsInfo(wireB);
+
+  const intersection = new Set(Array.from(pointsA).filter(x => pointsB.has(x)));
+
+  return Array.from(intersection)
+    .filter(i => i !== "0_0")
+    .map(posStr => [stepsA[posStr], stepsB[posStr]])
+    .reduce((acc, [stepsANum, stepsBNum]) => {
+      return Math.min(stepsANum + stepsBNum, acc);
+    }, Infinity);
+};
+
+type Test = null | {
+  deserializePosition: DeserializePosition;
+  serializePosition: SerializePosition;
+};
+
+let _test: Test = null;
+
+// istanbul ignore else
+if (typeof __TEST__ !== "undefined") {
+  _test = {
+    deserializePosition,
+    serializePosition
+  };
+}
+
 export {
+  Position,
   WireDirection,
   WirePath,
+  _test,
   convertWirePathsIntoMapStr,
+  getFewestCombinedStepsOfCrossing,
+  getManhattanDistanceOfClosestCrossing,
   parseLineIntoWirePath
 };

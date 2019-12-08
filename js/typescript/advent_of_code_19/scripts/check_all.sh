@@ -4,7 +4,7 @@ set -e
 
 (\
   cd scripts \
-  && sh _prettier.sh \
+  && sh _prettier_common.sh \
   '../.eslintrc.js' \
   '../jest.config.js' \
   -c

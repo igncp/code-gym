@@ -5,7 +5,7 @@
   "scripts": {
     "check": "sh ../scripts/check_common.sh",
     "fix": "sh ../scripts/fix_common.sh",
-    "start": "../node_modules/.bin/ts-node main.ts",
+    "start": "sh ../scripts/start_common.sh",
     "test": "../node_modules/.bin/jest tests.ts",
     "test-watch": "npm test -s -- --watch"
   },

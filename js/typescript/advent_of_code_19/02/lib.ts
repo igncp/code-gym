@@ -6,7 +6,7 @@ enum Opcode {
 
 type IntcodeValue = number;
 
-type IntcodeProgram = Array<IntcodeValue>;
+type IntcodeProgram = IntcodeValue[];
 
 type ExecutionPosition = number;
 
