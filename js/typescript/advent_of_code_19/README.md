@@ -12,7 +12,7 @@ These may change in future, but all examples should comply with them:
 
 - All in TypeScript
 - 100% type coverage for `lib.ts`
-- 100% line coverage for `lib.ts`
+- 100% unit test (line, branch, function, statement) coverage for `lib.ts`
 - TDD
 - Different approaches:
     - Example: Functional programming, object oriented, data driven
