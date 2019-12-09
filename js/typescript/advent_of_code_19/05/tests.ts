@@ -104,7 +104,8 @@ describe("runProgramTillEnd", () => {
 
   // eslint-disable-next-line jest/expect-expect
   it("can handle output", () => {
-    const onOutputRequest = jest.fn();
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    const onOutputRequest = jest.fn(() => {});
 
     compare("3,0,4,0,99", ["10,0,4,0,99", 4], {
       onInputRequest: () => 10,

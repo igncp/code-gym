@@ -10,6 +10,7 @@ const main = () => {
   const { signal: secondResult } = getHighestThrustersSignal(fileContent, true);
 
   assert(firstResult === 46014);
+  assert(firstResult === 19581200);
 
   console.log("Result:");
   console.log("1. First value: " + firstResult);

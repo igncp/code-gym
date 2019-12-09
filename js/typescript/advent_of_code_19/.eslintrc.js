@@ -3,6 +3,7 @@ module.exports = {
     "eslint:recommended",
     "plugin:@typescript-eslint/eslint-recommended",
     "plugin:jest/recommended",
+    "plugin:eslint-comments/recommended",
     "plugin:@typescript-eslint/recommended"
   ],
   env: {

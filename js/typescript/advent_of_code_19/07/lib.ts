@@ -74,6 +74,7 @@ const getInstructionConfig: GetInstructionConfig = num => {
 };
 
 interface RunProgramOpts {
+  getShouldHalt?(): boolean;
   onInputRequest?(): number;
   onOutputRequest?(p: number): void;
 }
@@ -175,12 +176,17 @@ const runProgramTillEnd: RunProgramTillEnd = (
   opts = {}
 ) => {
   const maxLoops = typeof opts.maxLoops === "undefined" ? 1000 : opts.maxLoops;
+  const getShouldHalt = opts.getShouldHalt || (() => false);
 
   let iterations = 0;
   let newProgram = program.slice(0);
   let newPosition = position;
 
-  while (newProgram[newPosition] !== Opcode.End && iterations < maxLoops) {
+  while (
+    newProgram[newPosition] !== Opcode.End &&
+    !getShouldHalt() &&
+    iterations < maxLoops
+  ) {
     [newProgram, newPosition] = runProgramOperation([newProgram, newPosition], {
       onInputRequest: opts.onInputRequest,
       onOutputRequest: opts.onOutputRequest
@@ -263,44 +269,43 @@ const getHighestThrustersSignal: GetHighestThrustersSignal = (
   if (withFeedbackLoop) {
     runPhaseSettings([5, 6, 7, 8, 9], phaseSettings => {
       let lastOutput = 0;
-      let lastAmpEOutput = 0;
       let counter = 0;
 
-      const program = convertStrToProgram(programString)
-      const outputs: number[][] = phaseSettings.map(() => [])
+      const programs = phaseSettings.map(() =>
+        convertStrToProgram(programString)
+      );
+      const positions = phaseSettings.map(() => 0);
+      const requestedPhase = phaseSettings.map(() => false);
 
-      while (true) {
-        let inputRequested = -1;
-        let outputRequested = -1;
+      while (counter < 100 * 100) {
+        let shouldHalt = false;
+
         const ampIdx = counter % 5;
 
-        outputs[ampIdx] = [];
-
         const [newProgram, newPosition] = runProgramTillEnd(
-          [program, 0],
+          [programs[ampIdx], positions[ampIdx]],
           {
+            getShouldHalt: () => {
+              return shouldHalt;
+            },
             onInputRequest: () => {
-              inputRequested += 1;
+              if (!requestedPhase[ampIdx]) {
+                requestedPhase[ampIdx] = true;
 
-              if (counter === 0 && inputRequested > 0) {
-                return 0;
+                return phaseSettings[ampIdx];
               }
 
-              return inputRequested === 0
-                ? phaseSettings[ampIdx]
-                : outputs[(counter - 1) % 5][inputRequested];
+              return lastOutput;
             },
             onOutputRequest: val => {
-              outputRequested += 1;
-
-              if (ampIdx === 4) {
-                lastAmpEOutput = val;
-              }
-
-              outputs[ampIdx].push(val);
+              shouldHalt = true;
+              lastOutput = val;
             }
           }
         );
+
+        programs[ampIdx] = newProgram;
+        positions[ampIdx] = newPosition;
 
         if (newProgram[newPosition] === Opcode.End) {
           break;
@@ -309,8 +314,8 @@ const getHighestThrustersSignal: GetHighestThrustersSignal = (
         counter += 1;
       }
 
-      if (lastAmpEOutput > bestSignal) {
-        bestSignal = lastAmpEOutput;
+      if (lastOutput > bestSignal) {
+        bestSignal = lastOutput;
         bestPhaseSetting = Number(phaseSettings.join(""));
       }
     });
