@@ -57,6 +57,11 @@ const getInstructionConfig: GetInstructionConfig = num => {
     positions = 2;
   } else if (opcodeNum === Opcode.End) {
     positions = 0;
+  } else if (
+    opcodeNum === Opcode.JumpIfTrue ||
+    opcodeNum === Opcode.JumpIfFalse
+  ) {
+    positions = 3;
   } else if (!Object.values(Opcode).includes(opcodeNum)) {
     throw new Error("Invalid opcode: " + opcodeNum);
   }
@@ -87,7 +92,7 @@ const runProgramOperation: RunProgramOperation = (
   const { positions, opcode, paramsModes } = getInstructionConfig(
     newProgram[position]
   );
-  const newPosition = position + positions;
+  let newPosition = position + positions;
 
   const getInput = (posNum: number): number => {
     const inputPosition = newProgram[position + posNum];
@@ -103,12 +108,38 @@ const runProgramOperation: RunProgramOperation = (
     newProgram[outputPosition] = val;
   };
 
+  const updatePointer = (val: number) => {
+    newPosition = val;
+  };
+
   if (opcode === Opcode.Addition) {
     const result = getInput(1) + getInput(2);
     setOutput(3, result);
   } else if (opcode === Opcode.Multiplication) {
     const result = getInput(1) * getInput(2);
     setOutput(3, result);
+  } else if (opcode === Opcode.JumpIfTrue) {
+    const firstParam = getInput(1);
+
+    if (firstParam) {
+      const secondParam = getInput(2);
+
+      updatePointer(secondParam);
+    }
+  } else if (opcode === Opcode.JumpIfFalse) {
+    const firstParam = getInput(1);
+
+    if (!firstParam) {
+      const secondParam = getInput(2);
+
+      updatePointer(secondParam);
+    }
+  } else if (opcode === Opcode.LessThan) {
+    const result = getInput(1) < getInput(2);
+    setOutput(3, result ? 1 : 0);
+  } else if (opcode === Opcode.Equals) {
+    const result = getInput(1) === getInput(2);
+    setOutput(3, result ? 1 : 0);
   } else if (opcode === Opcode.Input) {
     if (!opts.onInputRequest) {
       throw new Error("Missing onInputRequest");
