@@ -33,7 +33,7 @@ const main = () => {
 
   console.log("Result:");
   console.log("1. First value: " + firstResultOutput);
-  console.log("1. Second value: " + secondResultOutput);
+  console.log("2. Second value: " + secondResultOutput);
 };
 
 main();

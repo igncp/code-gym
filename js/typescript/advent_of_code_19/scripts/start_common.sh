@@ -2,13 +2,7 @@
 
 set -e
 
-rm -rf dist
-
-printf "Compiling..."
-
-../node_modules/.bin/tsc --project .
-
-printf " Compiled.\n\n"
+sh ../scripts/_compile_common.sh
 
 if [ -f input.txt ]; then
   cp input.txt dist
