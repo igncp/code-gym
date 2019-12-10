@@ -1,0 +1,14 @@
+{
+  "name": "09",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "check": "sh ../scripts/check_common.sh",
+    "fix": "sh ../scripts/fix_common.sh",
+    "start": "sh ../scripts/start_common.sh",
+    "test": "../node_modules/.bin/jest tests.ts",
+    "test-watch": "npm test -s -- --watch"
+  },
+  "author": "Ignacio Carbajo",
+  "license": "MIT"
+}
