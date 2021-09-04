@@ -1,0 +1,13 @@
+{
+  "name": "code-gym-elasticsearch",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Some notes and scripts to get more experience with the ELK stack",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "elastic-builder": "^2.16.0",
+    "elasticsearch": "^16.7.2"
+  }
+}
