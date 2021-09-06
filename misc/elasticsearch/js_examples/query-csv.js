@@ -26,7 +26,7 @@ const main = async () => {
       index: "demo-csv",
     });
 
-    console.log("query-csv.js: resp.hits.hits", resp.hits.total.value);
+    console.log("query-csv.js: resp.hits.total.value", resp.hits.total.value);
   } catch (err) {
     console.error("ERROR", err.message);
   }

@@ -43,6 +43,7 @@ Some notes and scripts to get more experience with the ELK stack
 
 ## Readings
 
+- [ ] Elasticsearch with Kibana maps: https://spinscale.de/posts/2021-09-01-using-german-highway-api-data-with-kibana-maps.html
 - [ ] Elasticsearch EQL: https://logz.io/blog/elasticsearch-queries/
 - [ ] Elasticsearch API 101: https://logz.io/blog/elasticsearch-api/
 - [ ] How does Elasticsearch work: https://www.knowi.com/blog/what-is-elastic-search/
@@ -54,6 +55,8 @@ Some notes and scripts to get more experience with the ELK stack
 ## Other
 
 - It is important to define the index pattern after some data has been injected
+- When there are multiple configuration in logstash pipelines, logstash will merge them
+    - To preserve two different flows, need to use tags
 
 ## Examples
 

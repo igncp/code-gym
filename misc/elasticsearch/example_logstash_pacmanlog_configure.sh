@@ -2,21 +2,22 @@
 
 set -e
 
-# CSV: https://www.elastic.co/guide/en/logstash/current/plugins-filters-csv.html
-# FILE: https://www.elastic.co/guide/en/logstash/current/plugins-inputs-file.html
+# This example maps to a real log file, so the data should be updated whenever
+# the file is updated
 
-# https://www.elastic.co/guide/en/logstash/current/config-examples.html
-# https://github.com/logstash-plugins/logstash-filter-csv
+# FILE: https://www.elastic.co/guide/en/logstash/current/plugins-inputs-file.html
+# GROK: https://www.elastic.co/guide/en/logstash/current/plugins-filters-grok.html
+# https://grokdebug.herokuapp.com/
 
 cd docker-elk
 
-HAS_VOLUME="$(grep file.csv docker-compose.yml || true)"
+HAS_VOLUME="$(grep pacman.log docker-compose.yml || true)"
 
 if [ -z "$HAS_VOLUME" ]; then
   read -r -d '' NEW_VOLUME << EOM || true
 - type: bind
-        source: ./logstash/file.csv
-        target: /usr/share/file.csv
+        source: /var/log/pacman.log
+        target: /usr/share/pacman.log
         read_only: true
 EOM
   REF_LINE_NUMBER="$(grep -n '/usr/share/logstash/pipeline' docker-compose.yml | cut -f1 -d:)"
@@ -28,39 +29,31 @@ EOM
     && mv /tmp/docker-compose.yml docker-compose.yml && rm -rf /tmp/docker-compose.yml
 fi
 
-if [ ! -f logstash/file.csv ]; then
-  echo "file.csv missing, copy it"
-  exit 1
-fi
-
-cat > logstash/pipeline/csv-movies.conf <<"EOF"
+cat > logstash/pipeline/pacmanlog.conf <<"EOF"
 input {
   file {
-    path => "/usr/share/file.csv"
+    path => "/usr/share/pacman.log"
     start_position => "beginning"
-    tags => ["movies-csv"]
+    tags => ["pacman-log"]
   }
 }
 
 filter {
-  if "movies-csv" in [tags] {
-    csv {
-      separator => ","
-      autodetect_column_names => true
-      skip_header => false
-      convert => {
-        "Year of Release" => "integer"
+  if "pacman-log" in [tags] {
+    grok {
+      match => {
+        "message" => "\[%{TIMESTAMP_ISO8601:date}\] \[%{DATA:entity}\] %{GREEDYDATA:action}"
       }
     }
   }
 }
 
 output {
-  if "movies-csv" in [tags] {
+  if "pacman-log" in [tags] {
     elasticsearch {
       ecs_compatibility => disabled
       hosts => "elasticsearch:9200"
-      index => "demo-csv"
+      index => "demo-pacmanlog"
       password => "changeme"
       user => "elastic"
     }
