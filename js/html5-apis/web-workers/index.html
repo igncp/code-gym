@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+  </head>
+  <!-- https://www.w3schools.com/html/html5_webworkers.asp -->
+  <body>
+    <p>Count numbers: <output id="result">0</output></p>
+    <button onclick="startWorker()">Start Redux</button>
+    <button onclick="stopWorker()">Stop Redux</button>
+
+    <script>
+      let w;
+      let postInterval;
+
+      function startWorker() {
+        if (w) return;
+
+        w = new Worker("demo-worker.js");
+        w.onmessage = function (event) {
+          const { data: storeState } = event;
+          document.getElementById("result").innerHTML = storeState.count;
+        };
+        postInterval = setInterval(() => {
+          w.postMessage({
+            type: "INCREMENT",
+          });
+        }, 1000);
+      }
+
+      function stopWorker() {
+        w.terminate();
+        clearInterval(postInterval);
+        w = undefined;
+      }
+    </script>
+  </body>
+</html>

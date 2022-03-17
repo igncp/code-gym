@@ -35,5 +35,12 @@
         - It also supports defining interfaces: when defining types, they can implement them, for example:
             - `type Droid implements Character`
         - There is also input types, which can be used for variables
-    - [ ] [Validation](https://graphql.org/learn/validation/)
+    - [x] [Validation](https://graphql.org/learn/validation/)
+        - Example of tests for validating queries: https://github.com/graphql/graphql-js/blob/main/src/__tests__/starWarsValidation-test.ts
+        - In a query, can't request anything that is not a scalar or enum type
+        - Can combine the `on TypeName` syntax with fragments, for example: `fragment DroidFields on Droid`
+            - If the fragment is only used once, can also use an unnamed inline fragment: `... on Droid {`
+    - [ ] [Execution](https://graphql.org/learn/validation/)
+        - Each field in a query is handled by a function called resolver, written by the developer in the server
+        - There is scalar coercion
     - [ ] ...
