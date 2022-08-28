@@ -1,11 +1,16 @@
 import Header from "../components/common/header";
+import PageTitle from "../components/common/page-title";
+import { OrderSummary } from "../lib/models";
 
-export default function Home({ orders }) {
-  console.log("orders.js: orders", orders);
+type Props = {
+  orders: OrderSummary[];
+};
+
+export default function Orders({ orders }: Props) {
   return (
     <div>
       <Header />
-      <h2>Orders</h2>
+      <PageTitle text="Orders" />
       <ul>
         {orders.map((order) => {
           return (
@@ -20,14 +25,15 @@ export default function Home({ orders }) {
 }
 
 export const getServerSideProps = async () => {
-  const { getWooClient } = await import("../lib/server/wooClient");
-  const client = getWooClient();
+  const { getServerModelClient } = await import("../lib/server/client");
+  const client = getServerModelClient();
 
   const orders = await client.getOrders();
+  const props: Props = {
+    orders,
+  };
 
   return {
-    props: {
-      orders,
-    },
+    props,
   };
 };

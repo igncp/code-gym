@@ -9,14 +9,20 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@types/js-cookie": "^3.0.2",
+    "@types/wpapi": "^1.1.1",
     "@woocommerce/woocommerce-rest-api": "^1.0.1",
+    "cookies-next": "^2.1.1",
+    "js-cookie": "^3.0.1",
     "next": "12.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "wpapi": "^1.2.2"
   },
   "devDependencies": {
+    "@types/react": "^18.0.17",
     "eslint": "8.23.0",
-    "eslint-config-next": "12.2.5"
+    "eslint-config-next": "12.2.5",
+    "typescript": "^4.8.2"
   }
 }
