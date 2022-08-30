@@ -46,8 +46,21 @@ class ModelClient {
     }));
   }
 
+  async getCustomer({ email }: { email: string }): Promise<any> {
+    // const orders = await this.wooClient.getOrders();
+    // console.log("index.ts: orders", orders.data.length);
+    const customers = await this.wooClient.getCustomers({ email });
+    console.log("index.ts: customers", customers);
+
+    if (!customers.length) return null;
+
+    return customers[0];
+  }
+
   async getPage(id: string): Promise<PageDetail> {
     const page = await this.wpClient.getPage(id);
+
+    if (!page) throw new Error("Missing page: " + id);
 
     return {
       id,
@@ -132,16 +145,15 @@ class ModelClient {
   }
 
   async getUserMe(): Promise<PersonalInfo> {
-    const { name, code } = await this.wpClient.getUserMe();
+    const { name, code, id, email } = await this.wpClient.getUser({ id: "me" });
 
-    return { name, code };
+    return { name, code, email, id };
   }
 
   async login(userCreds: { username: string; password: string }) {
     return await this.wpClient.login(userCreds);
   }
 
-  // https://woocommerce.github.io/woocommerce-rest-api-docs/#create-an-order
   async postOrder(data: Parameters<ModelClient["wooClient"]["postOrder"]>[0]) {
     const response = await this.wooClient.postOrder(data);
 

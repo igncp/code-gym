@@ -20,6 +20,8 @@ type WPPageDetail = {
 
 type WPPersonalInfo = {
   code: string;
+  email: string;
+  id: number;
   name: string;
 };
 
@@ -29,18 +31,10 @@ type WPPostSummary = {
 };
 
 class WPClient {
-  private adminAPI: any;
   private api: any;
   private token: string | undefined;
 
   public constructor(token?: string) {
-    this.adminAPI = new WPAPI({
-      endpoint: REST_BASE_URL + "/",
-      // If using http authentication, it needs to have this in wp:
-      // add_filter( 'wp_is_application_passwords_available', '__return_true' );
-      password: process.env.WP_APP_PASS,
-      username: "admin",
-    });
     this.token = token;
     this.api = new WPAPI({
       endpoint: REST_BASE_URL + "/",
@@ -57,8 +51,19 @@ class WPClient {
     username: string;
   }) {
     const newUser = { username, password, email };
+    const { token: adminToken } = await this.login({
+      password: process.env.WP_APP_PASS as string,
+      username: "admin",
+    });
 
-    return await this.adminAPI.users().create(newUser);
+    return await fetch(REST_BASE_URL + "/wp/v2/users/", {
+      method: "POST",
+      body: JSON.stringify(newUser),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + adminToken,
+      },
+    });
   }
 
   async getComments(postId: string) {
@@ -82,17 +87,25 @@ class WPClient {
     return (await this.api.posts().get()) as WPPostSummary[];
   }
 
-  async getUserMe() {
-    const result = await fetch(REST_BASE_URL + "/wp/v2/users/me", {
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: "Bearer " + this.token,
-      },
-    });
+  async getUser({ id }: { id: string }) {
+    const result = await fetch(
+      REST_BASE_URL + "/wp/v2/users/" + id + "?context=edit",
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer " + this.token,
+        },
+      }
+    );
 
-    const { name, code = "" } = (await result.json()) as WPPersonalInfo;
+    const {
+      name,
+      code = "",
+      id: realId,
+      email,
+    } = (await result.json()) as WPPersonalInfo;
 
-    return { name, code };
+    return { name, code, id: realId, email };
   }
 
   async login(userCreds: { username: string; password: string }) {

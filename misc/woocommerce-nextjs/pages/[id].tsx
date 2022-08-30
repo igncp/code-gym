@@ -22,12 +22,18 @@ export const getServerSideProps = async (
 ) => {
   const { getServerModelClient } = await import("../lib/server/client");
   const client = getServerModelClient();
-  const page = await client.getPage(context.query.id as string);
-  const props = {
-    page,
-  };
+  try {
+    const page = await client.getPage(context.query.id as string);
+    const props = {
+      page,
+    };
 
-  return {
-    props,
-  };
+    return {
+      props,
+    };
+  } catch {
+    return {
+      notFound: true,
+    };
+  }
 };

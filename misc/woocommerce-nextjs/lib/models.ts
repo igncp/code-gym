@@ -23,6 +23,8 @@ export type PaymentGateway = {
 
 export type PersonalInfo = {
   code: string;
+  email: string;
+  id: number;
   name: string;
 };
 

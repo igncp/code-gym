@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Header from "../components/common/header";
+import PageTitle from "../components/common/page-title";
 import { getFEModelClient } from "../lib/frontend/client";
 
 export default function Home() {
@@ -25,7 +26,7 @@ export default function Home() {
     <div>
       <Header />
       <main>
-        <h2>Signup</h2>
+        <PageTitle text="Sign up" />
         <div>
           <input
             type="text"
@@ -44,7 +45,7 @@ export default function Home() {
         </div>
         <div>
           <input
-            type="text"
+            type="password"
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}

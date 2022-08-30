@@ -4,7 +4,7 @@ const signup = async (req: NextApiRequest, res: NextApiResponse) => {
   const { getServerModelClient } = await import("../../lib/server/client");
   const { body } = req;
   const client = getServerModelClient();
-  const user = await client.createUser(JSON.parse(body));
+  const user = await client.createUser(body);
 
   res.json(user);
 };

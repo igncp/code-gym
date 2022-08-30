@@ -1,3 +1,4 @@
+import { GetServerSidePropsContext } from "next/types";
 import Header from "../components/common/header";
 import PageTitle from "../components/common/page-title";
 import { OrderSummary } from "../lib/models";
@@ -24,11 +25,23 @@ export default function Orders({ orders }: Props) {
   );
 }
 
-export const getServerSideProps = async () => {
-  const { getServerModelClient } = await import("../lib/server/client");
-  const client = getServerModelClient();
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext
+) => {
+  const [{ getServerModelClient }, { getToken }] = await Promise.all([
+    import("../lib/server/client"),
+    import("../lib/server/auth"),
+  ]);
+  const token = getToken(context);
+  const client = getServerModelClient({ token });
 
-  const orders = await client.getOrders();
+  const user = await client.getUserMe();
+  const customer = await client.getCustomer({ email: user.email });
+
+  const orders: Props["orders"] = [];
+
+  console.log("orders.tsx: customer", customer);
+
   const props: Props = {
     orders,
   };

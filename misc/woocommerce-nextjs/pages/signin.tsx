@@ -3,6 +3,7 @@ import Header from "../components/common/header";
 import cookie from "js-cookie";
 import { useRouter } from "next/router";
 import { GetServerSidePropsContext } from "next/types";
+import PageTitle from "../components/common/page-title";
 
 export default function SignIn() {
   const [username, setUsername] = useState("");
@@ -17,7 +18,12 @@ export default function SignIn() {
         username,
       }),
     });
-    const { token } = await result.json();
+    const { token, code, message } = await result.json();
+
+    if (code) {
+      console.error(code, message);
+      return;
+    }
 
     cookie.set("token", token, {
       http: true,
@@ -30,7 +36,7 @@ export default function SignIn() {
     <div>
       <Header />
       <main>
-        <h2>Signup</h2>
+        <PageTitle text="Sign in" />
         <div>
           <input
             type="text"
@@ -41,10 +47,10 @@ export default function SignIn() {
         </div>
         <div>
           <input
-            type="text"
-            placeholder="Password"
-            value={password}
             onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            type="password"
+            value={password}
           />
         </div>
         <div>

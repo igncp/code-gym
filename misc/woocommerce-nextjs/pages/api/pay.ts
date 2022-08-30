@@ -19,7 +19,7 @@ const pay = async (req: NextApiRequest, res: NextApiResponse) => {
       state: "CA",
       postcode: "94103",
       country: "US",
-      email: "john.doe@example.com",
+      email: "foo@bar.com",
       phone: "(555) 555-5555",
     },
     shipping: {
